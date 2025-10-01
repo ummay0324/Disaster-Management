@@ -17,6 +17,12 @@ export default function Home() {
         <nav className="ml-auto flex gap-4 sm:gap-6">
           <Link
             className="text-sm font-medium hover:underline underline-offset-4"
+            href="/chatbot"
+          >
+            Chatbot
+          </Link>
+          <Link
+            className="text-sm font-medium hover:underline underline-offset-4"
             href="/login"
           >
             Admin
