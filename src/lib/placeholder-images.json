@@ -1,3 +1,22 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero",
+      "description": "A person receiving aid in a disaster area.",
+      "imageUrl": "https://images.unsplash.com/photo-1541710005980-7ea80ff232d6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxkaXNhc3RlciUyMHJlbGllZnxlbnwwfHx8fDE3NTkyNTc4OTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "disaster relief"
+    },
+    {
+      "id": "map",
+      "description": "A map showing various locations.",
+      "imageUrl": "https://images.unsplash.com/photo-1527824786100-2787b7fdc674?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxtYXAlMjByZXF1ZXN0c3xlbnwwfHx8fDE3NTkzNDMxMjN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "map requests"
+    },
+    {
+      "id": "proof",
+      "description": "Proof of delivery image",
+      "imageUrl": "https://images.unsplash.com/photo-1595054225874-7d2315262e73?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZGVsaXZlcnklMjBib3h8ZW58MHx8fHwxNzU5MjIyMjAxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "delivery box"
+    }
+  ]
 }

@@ -1,0 +1,163 @@
+'use client';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { GlassWater, Loader2, LocateFixed, MapPin, Pill, Stethoscope, UtensilsCrossed } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+const items = [
+  { id: 'food', label: 'Food', icon: <UtensilsCrossed className="h-5 w-5" /> },
+  { id: 'water', label: 'Water', icon: <GlassWater className="h-5 w-5" /> },
+  { id: 'medicine', label: 'Medicine', icon: <Pill className="h-5 w-5" /> },
+  { id: 'medical help', label: 'Medical Help', icon: <Stethoscope className="h-5 w-5" /> },
+] as const;
+
+const FormSchema = z.object({
+  items: z.array(z.string()).refine((value) => value.some((item) => item), {
+    message: 'You have to select at least one item.',
+  }),
+  location: z.string().min(1, { message: 'Location is required.'}),
+});
+
+export function AidRequestForm({ onSubmitSuccess }: { onSubmitSuccess: () => void }) {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      items: [],
+      location: '',
+    },
+  });
+  
+  const fetchLocation = async () => {
+    setIsFetchingLocation(true);
+    // Simulate fetching location
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const mockLocation = "123 Disaster Ave, Emergency City";
+    form.setValue("location", mockLocation);
+    setIsFetchingLocation(false);
+  }
+
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    setIsSubmitting(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    toast({
+      title: 'Request Submitted',
+      description: 'Your aid request has been sent. Help is on the way.',
+    });
+    form.reset();
+    onSubmitSuccess();
+    setIsSubmitting(false);
+  }
+
+  return (
+    <Card className="shadow-lg">
+      <CardHeader>
+        <CardTitle>Request Aid</CardTitle>
+        <CardDescription>Fill out the form below to request assistance. Your location will be automatically detected.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Your Location</FormLabel>
+                   <div className="flex gap-2">
+                    <FormControl>
+                        <div className="relative w-full">
+                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="Click to fetch location" {...field} disabled={true} className="pl-10" />
+                        </div>
+                    </FormControl>
+                    <Button type="button" variant="outline" onClick={fetchLocation} disabled={isFetchingLocation}>
+                        {isFetchingLocation ? <Loader2 className="h-4 w-4 animate-spin"/> : <LocateFixed className="h-4 w-4" />}
+                    </Button>
+                   </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="items"
+              render={() => (
+                <FormItem>
+                  <div className="mb-4">
+                    <FormLabel className="text-base">I need...</FormLabel>
+                    <FormDescription>
+                      Select all the items you require.
+                    </FormDescription>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                  {items.map((item) => (
+                    <FormField
+                      key={item.id}
+                      control={form.control}
+                      name="items"
+                      render={({ field }) => {
+                        return (
+                          <FormItem
+                            key={item.id}
+                            className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[[data-state=checked]]:bg-accent"
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(item.id)}
+                                onCheckedChange={(checked) => {
+                                  return checked
+                                    ? field.onChange([...field.value, item.id])
+                                    : field.onChange(
+                                        field.value?.filter(
+                                          (value) => value !== item.id
+                                        )
+                                      );
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal flex items-center gap-2 w-full cursor-pointer">
+                                {item.icon} {item.label}
+                            </FormLabel>
+                          </FormItem>
+                        );
+                      }}
+                    />
+                  ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Submit Request
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+}
