@@ -8,8 +8,10 @@ import { AidRequest, AidRequestItem } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
 import { BedDouble, Check, GlassWater, LifeBuoy, Loader2, MapPin, Pill, ScanLine, Ship, Stethoscope, Tent, UtensilsCrossed } from "lucide-react";
 import { useState } from "react";
-import { doc, updateDoc, getFirestore } from 'firebase/firestore';
+import { doc, getFirestore, updateDoc } from 'firebase/firestore';
 import { useFirebaseApp } from "@/firebase";
+import { FirestorePermissionError } from "@/firebase/errors";
+import { errorEmitter } from "@/firebase/error-emitter";
 
 interface TaskCardProps {
     request: AidRequest;
@@ -38,26 +40,25 @@ export function TaskCard({ request }: TaskCardProps) {
         // In a real app, you would use a QR scanner to get the request ID.
         // Here we simulate a successful scan.
         const requestDocRef = doc(firestore, 'requests', request.id);
+        const updatedData = { status: 'delivered' };
         
-        try {
-            await updateDoc(requestDocRef, {
-                status: 'delivered'
-            });
-            
-            toast({
+        updateDoc(requestDocRef, updatedData)
+        .then(() => {
+             toast({
                 title: "Request Verified & Completed",
                 description: `Request from ${request.victimName} marked as delivered.`,
             });
-        } catch (error) {
-            console.error("Failed to update status:", error);
-            toast({
-                variant: 'destructive',
-                title: "Update Failed",
-                description: `Could not mark request as delivered.`,
+            // We don't stop the loading indicator here because the UI will update via the real-time listener
+        })
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: requestDocRef.path,
+                operation: 'update',
+                requestResourceData: updatedData,
             });
-        } finally {
-            setIsSubmitting(false);
-        }
+            errorEmitter.emit('permission-error', permissionError);
+            setIsSubmitting(false); // Stop loading on error
+        });
     }
 
     const isDelivered = request.status === 'delivered';
