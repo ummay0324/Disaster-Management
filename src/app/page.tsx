@@ -149,6 +149,23 @@ export default function Home() {
             </div>
           </div>
         </section>
+        <section className="w-full py-12 md:py-24 lg:py-32">
+          <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6">
+            <div className="space-y-3">
+              <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
+                Ready to Transform Crisis Response?
+              </h2>
+              <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                Join leading NGOs and relief organizations using DisasterAid to save lives and coordinate efficient emergency responses.
+              </p>
+            </div>
+            <div className="mx-auto w-full max-w-sm space-y-2">
+                <Button asChild size="lg">
+                    <Link href="/login">Get Started Now</Link>
+                </Button>
+            </div>
+          </div>
+        </section>
       </main>
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t bg-background/30 backdrop-blur-lg">
         <p className="text-xs text-muted-foreground">
