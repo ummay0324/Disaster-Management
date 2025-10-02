@@ -3,6 +3,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { HeartHandshake } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { AccessDashboardButton } from '@/components/access-dashboard-button';
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find((img) => img.id === 'hero');
@@ -43,9 +44,7 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                   <Button asChild size="lg">
-                    <Link href="/login">Get Started</Link>
-                  </Button>
+                   <AccessDashboardButton />
                 </div>
               </div>
               {heroImage && (

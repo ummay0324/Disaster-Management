@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { HeartHandshake, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
@@ -29,13 +29,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import type { UserRole } from '@/lib/types';
-import { useAuth } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
 import { 
   initiateEmailSignIn, 
   initiateEmailSignUp,
 } from '@/firebase/non-blocking-login';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { doc, getFirestore } from 'firebase/firestore';
+import { doc, getFirestore, getDoc, doc as firestoreDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const loginSchema = z.object({
@@ -54,12 +54,30 @@ const signupSchema = z.object({
   }),
 });
 
-export function AuthForm() {
+interface AuthFormProps {
+  isLoginPage?: boolean;
+}
+
+export function AuthForm({ isLoginPage = false }: AuthFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
+  const { user: currentUser, isUserLoading } = useUser();
   const firestore = getFirestore(auth.app);
+  
+  // Redirect logged-in users
+  useEffect(() => {
+    if (!isUserLoading && currentUser && isLoginPage) {
+      // If user is on login page but already logged in, redirect them.
+       const redirect = async () => {
+         const role = await getUserRole(currentUser.uid);
+         router.push(`/${role}/dashboard`);
+       }
+       redirect();
+    }
+  }, [currentUser, isUserLoading, isLoginPage, router]);
+
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -71,41 +89,41 @@ export function AuthForm() {
     defaultValues: { name: '', email: '', password: '', role: 'victim' },
   });
 
+  const getUserRole = async (uid: string): Promise<UserRole> => {
+      const adminDoc = await getDoc(firestoreDoc(firestore, "admins", uid));
+      if (adminDoc.exists()) return 'admin';
+      
+      const volunteerDoc = await getDoc(firestoreDoc(firestore, "volunteers", uid));
+      if (volunteerDoc.exists()) return 'volunteer';
+      
+      return 'victim';
+  };
+
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     initiateEmailSignIn(auth, values.email, values.password);
 
-    onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
-            // This is a simplified role detection. 
-            // In a real app, you'd fetch the user's profile from Firestore to get their role.
-            let role: UserRole = 'victim';
-            if (values.email.includes('admin')) {
-                role = 'admin';
-            } else if (values.email.includes('volunteer')) {
-                role = 'volunteer';
-            }
-
+            unsubscribe();
+            const role = await getUserRole(user.uid);
             toast({
                 title: 'Login Successful',
                 description: `Redirecting to your ${role} dashboard...`,
             });
             router.push(`/${role}/dashboard`);
         }
-        // Handle login failure in a real app, e.g. via an error listener
     });
-    // We don't setIsLoading(false) here because we are navigating away.
   };
 
   const handleSignup = async (values: z.infer<typeof signupSchema>) => {
     setIsLoading(true);
-    initiateEmailSignUp(auth, values.email, values.password);
-
-    onAuthStateChanged(auth, (user) => {
+    
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
+            unsubscribe();
             const { role, name, email } = values;
             
-            // Determine collection and data based on role
             let collectionPath: string;
             let userProfileData: any;
 
@@ -120,7 +138,6 @@ export function AuthForm() {
                 userProfileData = { id: user.uid, name, email };
             }
 
-            // Save user profile to Firestore
             const userDocRef = doc(firestore, collectionPath, user.uid);
             setDocumentNonBlocking(userDocRef, userProfileData, { merge: true });
 
@@ -130,8 +147,9 @@ export function AuthForm() {
             });
             router.push(`/${values.role}/dashboard`);
         }
-        // Handle signup failure in a real app
     });
+
+    initiateEmailSignUp(auth, values.email, values.password);
   };
 
   return (
