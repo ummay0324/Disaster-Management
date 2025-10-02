@@ -16,9 +16,9 @@ export default async function VolunteerDashboardPage() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 border-2 border-dashed rounded-lg">
-          <h2 className="text-xl font-semibold text-muted-foreground">No tasks assigned yet.</h2>
-          <p className="text-muted-foreground mt-2">Check back later for new assignments.</p>
+        <div className="text-center py-16 border-2 border-dashed border-white/20 rounded-lg bg-black/20 backdrop-blur-lg">
+          <h2 className="text-xl font-semibold text-gray-300">No tasks assigned yet.</h2>
+          <p className="text-gray-400 mt-2">Check back later for new assignments.</p>
         </div>
       )}
     </div>

@@ -44,7 +44,7 @@ export function TaskCard({ request }: TaskCardProps) {
     }
 
     return (
-        <Card className="w-full shadow-lg">
+        <Card className="w-full">
             <CardHeader>
                 <CardTitle>{request.victimName}</CardTitle>
                 <CardDescription className="flex items-center gap-2 pt-1">
@@ -55,16 +55,16 @@ export function TaskCard({ request }: TaskCardProps) {
             <CardContent className="space-y-4">
                 <div>
                     <h4 className="font-semibold mb-2">Requested Items:</h4>
-                    <div className="flex flex-wrap gap-4">
+                    <div className="flex flex-wrap gap-2">
                         {request.items.map(item => (
-                            <div key={item} className="flex items-center gap-2 capitalize text-muted-foreground p-2 border rounded-md">
+                            <div key={item} className="flex items-center gap-2 capitalize text-gray-300 p-2 border border-white/10 rounded-md bg-black/20">
                                 {itemIcons[item]}
                                 <span>{item}</span>
                             </div>
                         ))}
                     </div>
                 </div>
-                 <p className="text-sm text-muted-foreground">
+                 <p className="text-sm text-gray-400">
                     Assigned {formatDistanceToNow(request.createdAt, { addSuffix: true })}
                 </p>
             </CardContent>

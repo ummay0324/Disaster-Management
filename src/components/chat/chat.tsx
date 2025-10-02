@@ -54,7 +54,7 @@ export function Chat() {
   };
 
   return (
-    <Card className="w-full max-w-2xl h-[90vh] flex flex-col shadow-2xl">
+    <Card className="w-full max-w-2xl h-[90vh] flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bot /> ReliefLink Assistant
@@ -71,8 +71,8 @@ export function Chat() {
                 }`}
               >
                 {message.role === 'assistant' && (
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>
+                  <Avatar className="h-8 w-8 border-2 border-primary">
+                    <AvatarFallback className="bg-transparent">
                       <Bot />
                     </AvatarFallback>
                   </Avatar>
@@ -81,14 +81,14 @@ export function Chat() {
                   className={`rounded-lg px-4 py-2 max-w-[80%] ${
                     message.role === 'user'
                       ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
+                      : 'bg-black/30 border border-white/10'
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 </div>
                  {message.role === 'user' && (
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>
+                  <Avatar className="h-8 w-8 border-2 border-white/20">
+                    <AvatarFallback className="bg-transparent">
                       <User />
                     </AvatarFallback>
                   </Avatar>
@@ -97,24 +97,24 @@ export function Chat() {
             ))}
              {isLoading && messages[messages.length -1]?.role === 'user' &&(
               <div className="flex items-start gap-3">
-                 <Avatar className="h-8 w-8">
-                    <AvatarFallback>
+                 <Avatar className="h-8 w-8 border-2 border-primary">
+                    <AvatarFallback className="bg-transparent">
                       <Bot />
                     </AvatarFallback>
                   </Avatar>
-                  <div className="rounded-lg px-4 py-2 bg-muted flex items-center">
+                  <div className="rounded-lg px-4 py-2 bg-black/30 border border-white/10 flex items-center">
                       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                   </div>
               </div>
             )}
           </div>
         </ScrollArea>
-        <form onSubmit={handleSendMessage} className="flex items-center gap-2 border-t pt-4">
+        <form onSubmit={handleSendMessage} className="flex items-center gap-2 border-t border-white/10 pt-4">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about relief efforts..."
-            className="flex-1"
+            className="flex-1 bg-black/20 border-white/10"
             disabled={isLoading}
           />
           <Button type="submit" disabled={isLoading || !input.trim()}>

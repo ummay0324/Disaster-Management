@@ -38,7 +38,7 @@ export function AdminDashboard({ initialRequests }: AdminDashboardClientProps) {
     <div className="container mx-auto p-4 md:p-8 space-y-8">
       <h1 className="text-3xl font-bold tracking-tight font-headline">Admin Dashboard</h1>
 
-      <Card className="shadow-lg">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="w-6 h-6" />
@@ -47,7 +47,7 @@ export function AdminDashboard({ initialRequests }: AdminDashboardClientProps) {
         </CardHeader>
         <CardContent>
           {mapImage && (
-            <div className="aspect-video w-full overflow-hidden rounded-lg border">
+            <div className="aspect-video w-full overflow-hidden rounded-lg border border-white/10">
                 <Image
                     src={mapImage.imageUrl}
                     alt={mapImage.description}
@@ -61,7 +61,7 @@ export function AdminDashboard({ initialRequests }: AdminDashboardClientProps) {
         </CardContent>
       </Card>
       
-      <Card className="shadow-lg">
+      <Card>
         <CardHeader>
           <CardTitle>All Requests</CardTitle>
         </CardHeader>

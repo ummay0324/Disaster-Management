@@ -19,15 +19,15 @@ const statusConfig = {
 export function RequestStatusList({ requests }: RequestStatusListProps) {
   if (requests.length === 0) {
     return (
-      <div className="text-center py-16 border-2 border-dashed rounded-lg">
-        <h2 className="text-xl font-semibold text-muted-foreground">You have no active requests.</h2>
-        <p className="text-muted-foreground mt-2">Use the form above to request aid.</p>
+      <div className="text-center py-16 border-2 border-dashed border-white/20 rounded-lg bg-black/20 backdrop-blur-lg">
+        <h2 className="text-xl font-semibold text-gray-300">You have no active requests.</h2>
+        <p className="text-gray-400 mt-2">Use the form to request aid.</p>
       </div>
     );
   }
 
   return (
-    <Card className="shadow-lg">
+    <Card>
         <CardHeader>
             <CardTitle>My Requests</CardTitle>
         </CardHeader>
@@ -35,10 +35,10 @@ export function RequestStatusList({ requests }: RequestStatusListProps) {
             {requests.map((request) => {
                 const status = statusConfig[request.status];
                 return (
-                    <div key={request.id} className="border p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div key={request.id} className="border border-white/10 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-black/20">
                         <div>
                             <p className="font-semibold capitalize">Request for: {request.items.join(', ')}</p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-gray-400">
                                 Submitted on {format(request.createdAt, 'PPP p')}
                             </p>
                             {request.status === 'assigned' && request.assignedVolunteerName && (

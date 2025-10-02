@@ -72,7 +72,7 @@ export function AidRequestForm({ onSubmitSuccess }: { onSubmitSuccess: () => voi
   }
 
   return (
-    <Card className="shadow-lg">
+    <Card>
       <CardHeader>
         <CardTitle>Request Aid</CardTitle>
         <CardDescription>Fill out the form below to request assistance. Your location will be automatically detected.</CardDescription>
@@ -90,7 +90,7 @@ export function AidRequestForm({ onSubmitSuccess }: { onSubmitSuccess: () => voi
                     <FormControl>
                         <div className="relative w-full">
                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Click to fetch location" {...field} disabled={true} className="pl-10" />
+                            <Input placeholder="Click to fetch location" {...field} disabled={true} className="pl-10 bg-black/20" />
                         </div>
                     </FormControl>
                     <Button type="button" variant="outline" onClick={fetchLocation} disabled={isFetchingLocation}>
@@ -122,7 +122,7 @@ export function AidRequestForm({ onSubmitSuccess }: { onSubmitSuccess: () => voi
                         return (
                           <FormItem
                             key={item.id}
-                            className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[[data-state=checked]]:bg-accent"
+                            className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-black/30 hover:text-accent-foreground has-[[data-state=checked]]:bg-accent/20 border-white/10"
                           >
                             <FormControl>
                               <Checkbox
