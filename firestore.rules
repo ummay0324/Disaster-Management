@@ -2,29 +2,29 @@
  * @fileoverview Firestore Security Rules for ReliefLink application.
  *
  * Core Philosophy:
- * This ruleset enforces a combination of user-ownership and role-based access control,
- * with denormalization to optimize security rule performance.
+ * This ruleset enforces a combination of ownership-based and role-based access control.
+ * Victims and Volunteers have ownership over their profiles. Admins have broad access based on their presence in the /admins collection.
  *
  * Data Structure:
- * - /victims/{victimId}: Victim profiles, accessible only by the victim themselves or an admin.
- * - /volunteers/{volunteerId}: Volunteer profiles, accessible only by the volunteer themselves or an admin.
- * - /requests/{requestId}: Requests for aid, accessible by admins, and victims can create requests for themself
- * - /tasks/{taskId}: Tasks assigned to volunteers, accessible by admins or assigned volunteers.
- * - /admins/{adminId}: Collection of admin UIDs. Existence in this collection grants admin privileges.
+ * - /victims/{victimId}: Stores victim profiles, accessible only by the victim and admins.
+ * - /volunteers/{volunteerId}: Stores volunteer profiles, accessible only by the volunteer and admins.
+ * - /requests/{requestId}: Stores requests for aid.
+ * - /tasks/{taskId}: Stores tasks assigned to volunteers.
+ * - /admins/{adminId}: Stores admin UIDs. Existence in this collection grants admin privileges.
  *
  * Key Security Decisions:
- * - Strict user-ownership model for victim and volunteer profiles.
- * - Role-based access control for admins, determined by their presence in the /admins collection.
- * - Denormalization of the 'victimId' field in the /requests collection to allow for efficient filtering and authorization.
- * - The 'status' field is included directly within the request, simplifying security rules and enabling status-based filtering.
- * - No public listing of any collections containing private user data.
+ * - Listing of users (victims, volunteers, admins) is disallowed for non-admins.
+ * - Data validation is relaxed in this prototyping phase to allow for rapid schema evolution.
+ *
+ * Denormalization for Authorization:
+ * - Admin status is determined by the existence of a document in the `/admins/{adminId}` collection, avoiding complex queries in the rules.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the user is signed in.
+     * @description Checks if the request is made by an authenticated user.
      */
     function isSignedIn() {
       return request.auth != null;
@@ -32,15 +32,15 @@ service cloud.firestore {
 
     /**
      * @description Checks if the authenticated user is the owner of the resource.
+     * @param {string} userId - The user ID to compare against the request's auth UID.
      */
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the authenticated user is an existing owner of the resource.
-     * This function combines the ownership check with the existence check to prevent accidental omissions.
-     * It is used primarily for `update` and `delete` operations.
+     * @description Checks if the authenticated user is the existing owner of the resource.
+     * @param {string} userId - The user ID to compare against the resource's data.
      */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
@@ -48,107 +48,137 @@ service cloud.firestore {
 
     /**
      * @description Checks if the authenticated user is an admin.
-     * This function performs a `get` on the `/admins/{userId}` document.
      */
     function isAdmin() {
       return exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     /**
-     * @description Rules for the /victims/{victimId} collection.
+     * @description Defines rules for the /victims/{victimId} collection.
      * @path /victims/{victimId}
-     * @allow (get) User with ID 'victim123' can get their own profile. (auth.uid: 'victim123')
-     * @allow (create) User with ID 'victim123' can create their own profile. (auth.uid: 'victim123')
-     * @allow (update) User with ID 'victim123' can update their own profile. (auth.uid: 'victim123')
-     * @deny (get) User with ID 'otherUser' cannot get the profile of user 'victim123'. (auth.uid: 'otherUser')
-     * @deny (create) User with ID 'otherUser' cannot create a profile for user 'victim123'. (auth.uid: 'otherUser')
-     * @deny (update) User with ID 'otherUser' cannot update the profile of user 'victim123'. (auth.uid: 'otherUser')
-     * @principle Enforces document ownership for reads and writes, and allows admin access.
+     * @allow (get) User with UID 'victim123' can read their own profile.
+     *   Request: auth.uid = 'victim123'
+     * @allow (create) User with UID 'victim123' can create their own profile if victimId matches.
+     *   Request: auth.uid = 'victim123', request.resource.data.id = 'victim123'
+     * @allow (update) User with UID 'victim123' can update their own profile.
+     *   Request: auth.uid = 'victim123'
+     * @allow (delete) User with UID 'victim123' can delete their own profile.
+     *   Request: auth.uid = 'victim123'
+     * @deny (get) User with UID 'otherUser' cannot read victim123's profile.
+     *   Request: auth.uid = 'otherUser'
+     * @deny (create) User with UID 'otherUser' cannot create a victim profile with victimId 'victim123'.
+     *   Request: auth.uid = 'otherUser', request.resource.data.id = 'victim123'
+     * @principle Enforces document ownership and admin access.
      */
     match /victims/{victimId} {
       allow get: if isOwner(victimId) || isAdmin();
       allow list: if false;
-      allow create: if isOwner(victimId);
+
+      allow create: if isOwner(victimId) && request.resource.data.id == victimId;
       allow update: if isExistingOwner(victimId) || isAdmin();
       allow delete: if isExistingOwner(victimId) || isAdmin();
     }
 
     /**
-     * @description Rules for the /volunteers/{volunteerId} collection.
+     * @description Defines rules for the /volunteers/{volunteerId} collection.
      * @path /volunteers/{volunteerId}
-     * @allow (get) User with ID 'volunteer456' can get their own profile. (auth.uid: 'volunteer456')
-     * @allow (create) User with ID 'volunteer456' can create their own profile. (auth.uid: 'volunteer456')
-     * @allow (update) User with ID 'volunteer456' can update their own profile. (auth.uid: 'volunteer456')
-     * @deny (get) User with ID 'otherUser' cannot get the profile of user 'volunteer456'. (auth.uid: 'otherUser')
-     * @deny (create) User with ID 'otherUser' cannot create a profile for user 'volunteer456'. (auth.uid: 'otherUser')
-     * @deny (update) User with ID 'otherUser' cannot update the profile of user 'volunteer456'. (auth.uid: 'otherUser')
-     * @principle Enforces document ownership for reads and writes, and allows admin access.
+     * @allow (get) User with UID 'volunteer456' can read their own profile.
+     *   Request: auth.uid = 'volunteer456'
+     * @allow (create) User with UID 'volunteer456' can create their own profile if volunteerId matches.
+     *   Request: auth.uid = 'volunteer456', request.resource.data.id = 'volunteer456'
+     * @allow (update) User with UID 'volunteer456' can update their own profile.
+     *   Request: auth.uid = 'volunteer456'
+     * @allow (delete) User with UID 'volunteer456' can delete their own profile.
+     *   Request: auth.uid = 'volunteer456'
+     * @deny (get) User with UID 'otherUser' cannot read volunteer456's profile.
+     *   Request: auth.uid = 'otherUser'
+     * @deny (create) User with UID 'otherUser' cannot create a volunteer profile with volunteerId 'volunteer456'.
+     *   Request: auth.uid = 'otherUser', request.resource.data.id = 'volunteer456'
+     * @principle Enforces document ownership and admin access.
      */
     match /volunteers/{volunteerId} {
       allow get: if isOwner(volunteerId) || isAdmin();
       allow list: if false;
-      allow create: if isOwner(volunteerId);
+
+      allow create: if isOwner(volunteerId) && request.resource.data.id == volunteerId;
       allow update: if isExistingOwner(volunteerId) || isAdmin();
       allow delete: if isExistingOwner(volunteerId) || isAdmin();
     }
 
     /**
-     * @description Rules for the /requests/{requestId} collection.
-     * Admins can read and write all requests. Victims can create requests for themself.
+     * @description Defines rules for the /requests/{requestId} collection.
      * @path /requests/{requestId}
-     * @allow (get) Admins can read any request. (isAdmin() == true)
-     * @allow (create) A victim can create a request with their ID. (request.auth.uid == request.resource.data.victimId)
-     * @deny (create) A victim cannot create a request for another victim. (request.auth.uid != request.resource.data.victimId)
-     * @principle Allows public read access but restricts writes to admins and the request's creator.
+     * @allow (get) Any signed-in user can read a request.
+     *   Request: auth.uid = 'user123'
+     * @allow (create) Any signed-in user can create a request.
+     *   Request: auth.uid = 'user123'
+     * @allow (update) Admins can update any request.
+     *   Request: auth.uid exists in /admins/{adminId}
+     * @allow (delete) Admins can delete any request.
+     *   Request: auth.uid exists in /admins/{adminId}
+     * @deny (update) Non-admins cannot update a request.
+     *   Request: auth.uid does not exist in /admins/{adminId}
+     * @deny (delete) Non-admins cannot delete a request.
+     *   Request: auth.uid does not exist in /admins/{adminId}
+     * @principle Allows public read access with restricted writes.
      */
     match /requests/{requestId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if isSignedIn() && request.resource.data.victimId == request.auth.uid;
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn();
       allow update: if isAdmin() && resource != null;
       allow delete: if isAdmin() && resource != null;
     }
 
     /**
-     * @description Rules for the /tasks/{taskId} collection.
-     * Admins can read and write all tasks. Volunteers can read and update tasks assigned to them.
+     * @description Defines rules for the /tasks/{taskId} collection.
      * @path /tasks/{taskId}
-     * @allow (get) Admins can read any task. (isAdmin() == true)
-     * @allow (update) Admins can update any task. (isAdmin() == true)
-     * @allow (get) Volunteers can read tasks assigned to them. (resource.data.volunteerId == request.auth.uid)
-     * @allow (update) Volunteers can update tasks assigned to them. (resource.data.volunteerId == request.auth.uid)
-     * @deny (get) Volunteers cannot read tasks assigned to other volunteers. (resource.data.volunteerId != request.auth.uid)
-     * @deny (update) Volunteers cannot update tasks assigned to other volunteers. (resource.data.volunteerId != request.auth.uid)
-     * @principle Allows public read access but restricts writes to admins and the task's assigned volunteer.
+     * @allow (get) Any signed-in user can read a task.
+     *   Request: auth.uid = 'user123'
+     * @allow (create) Admins can create a task.
+     *   Request: auth.uid exists in /admins/{adminId}
+     * @allow (update) Admins can update any task.
+     *   Request: auth.uid exists in /admins/{adminId}
+     * @allow (delete) Admins can delete any task.
+     *   Request: auth.uid exists in /admins/{adminId}
+     * @deny (create) Non-admins cannot create a task.
+     *   Request: auth.uid does not exist in /admins/{adminId}
+     * @deny (update) Non-admins cannot update a task.
+     *   Request: auth.uid does not exist in /admins/{adminId}
+     * @deny (delete) Non-admins cannot delete a task.
+     *   Request: auth.uid does not exist in /admins/{adminId}
      */
     match /tasks/{taskId} {
-      allow get: if isAdmin() || (isSignedIn() && resource.data.volunteerId == request.auth.uid);
-      allow list: if false;
+      allow get: if true;
+      allow list: if true;
       allow create: if isAdmin();
-      allow update: if isAdmin() || (isSignedIn() && resource.data.volunteerId == request.auth.uid && resource != null);
+      allow update: if isAdmin() && resource != null;
       allow delete: if isAdmin() && resource != null;
     }
 
     /**
-     * @description Rules for the /admins/{adminId} collection.
-     * Only admins can create, update, or delete admin profiles.
+     * @description Defines rules for the /admins/{adminId} collection.
      * @path /admins/{adminId}
-     * @allow (get) Admins can get any admin profile. (isAdmin() == true)
-     * @allow (create) Admins can create admin profiles. (isAdmin() == true)
-     * @allow (update) Admins can update admin profiles. (isAdmin() == true)
-     * @allow (delete) Admins can delete admin profiles. (isAdmin() == true)
-     * @deny (get) Non-admins cannot get admin profiles. (isAdmin() == false)
-     * @deny (create) Non-admins cannot create admin profiles. (isAdmin() == false)
-     * @deny (update) Non-admins cannot update admin profiles. (isAdmin() == false)
-     * @deny (delete) Non-admins cannot delete admin profiles. (isAdmin() == false)
-     * @principle Restricts access to admin profiles to only other admins.
+     * @allow (get) Only the admin themselves can get their own document.
+     *   Request: auth.uid = 'admin123'
+     * @allow (create) Only the admin themselves can create their own document.
+     *   Request: auth.uid = 'admin123'
+     * @allow (update) Only the admin themselves can update their own document.
+     *   Request: auth.uid = 'admin123'
+     * @allow (delete) Only the admin themselves can delete their own document.
+     *   Request: auth.uid = 'admin123'
+     * @deny (get) Other users cannot read admin profiles.
+     *   Request: auth.uid = 'otherUser'
+     * @deny (create) Other users cannot create admin profiles.
+     *   Request: auth.uid = 'otherUser'
+     * @principle Enforces document ownership.
      */
     match /admins/{adminId} {
-      allow get: if isAdmin();
+      allow get: if isOwner(adminId);
       allow list: if false;
-      allow create: if isAdmin();
-      allow update: if isAdmin() && resource != null;
-      allow delete: if isAdmin() && resource != null;
+      allow create: if isOwner(adminId) && request.resource.data.id == adminId;
+      allow update: if isExistingOwner(adminId);
+      allow delete: if isExistingOwner(adminId);
     }
   }
 }
