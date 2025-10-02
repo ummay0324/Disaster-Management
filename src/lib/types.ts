@@ -24,3 +24,13 @@ export type DisasterAlert = {
     message: string;
     createdAt: Date;
 }
+
+export type Shelter = {
+  id: string;
+  name: string;
+  location: string;
+  capacity: number;
+  currentOccupancy: number;
+  latitude: number;
+  longitude: number;
+};

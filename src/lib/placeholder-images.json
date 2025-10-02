@@ -17,6 +17,12 @@
       "description": "Proof of delivery image",
       "imageUrl": "https://images.unsplash.com/photo-1595054225874-7d2315262e73?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZGVsaXZlcnklMjBib3h8ZW58MHx8fHwxNzU5MjIyMjAxfDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "delivery box"
+    },
+    {
+      "id": "shelter-map",
+      "description": "A map showing shelter locations.",
+      "imageUrl": "https://images.unsplash.com/photo-1599933548995-c26b54133481?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtYXAlMjBzaGVsdGVyc3xlbnwwfHx8fDE3NTk5NjM5NTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "map shelters"
     }
   ]
 }

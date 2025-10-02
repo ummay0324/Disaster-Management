@@ -1,4 +1,4 @@
-import type { AidRequest, User, DisasterAlert } from './types';
+import type { AidRequest, User, DisasterAlert, Shelter } from './types';
 
 export const mockUsers: User[] = [
   { id: 'user1', name: 'Admin User', email: 'admin@relief.link', role: 'admin' },
@@ -59,3 +59,33 @@ export const mockAlerts: DisasterAlert[] = [
         createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
     }
 ];
+
+export const mockShelters: Shelter[] = [
+    {
+        id: 'shelter1',
+        name: 'Cityville Community Center',
+        location: '100 Center St, Cityville',
+        capacity: 100,
+        currentOccupancy: 45,
+        latitude: 34.0522,
+        longitude: -118.2437,
+    },
+    {
+        id: 'shelter2',
+        name: 'Townburg High School Gym',
+        location: '200 High School Dr, Townburg',
+        capacity: 250,
+        currentOccupancy: 180,
+        latitude: 34.0600,
+        longitude: -118.2500,
+    },
+    {
+        id: 'shelter3',
+        name: 'Villagetown Elementary',
+        location: '300 Schoolhouse Rd, Villagetown',
+        capacity: 75,
+        currentOccupancy: 75,
+        latitude: 34.0450,
+        longitude: -118.2300,
+    }
+]

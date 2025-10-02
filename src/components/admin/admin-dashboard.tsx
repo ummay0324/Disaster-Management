@@ -6,10 +6,12 @@ import { BroadcastAlertForm } from '@/components/admin/broadcast-alert-form';
 import { AlertList } from '@/components/alert-list';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { AidRequest, DisasterAlert } from '@/lib/types';
-import { MapPin, Megaphone, Siren } from 'lucide-react';
+import type { AidRequest, DisasterAlert, Shelter } from '@/lib/types';
+import { Home, MapPin, Megaphone, Siren } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
+import { ShelterManagementTable } from './shelter-management-table';
+import { mockShelters } from '@/lib/mock-data';
 
 interface AdminDashboardClientProps {
   initialRequests: AidRequest[];
@@ -19,6 +21,7 @@ interface AdminDashboardClientProps {
 export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboardClientProps) {
   const [requests, setRequests] = useState<AidRequest[]>(initialRequests);
   const [alerts, setAlerts] = useState<DisasterAlert[]>(initialAlerts);
+  const [shelters, setShelters] = useState<Shelter[]>(mockShelters);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<AidRequest | null>(null);
   const mapImage = PlaceHolderImages.find((img) => img.id === 'map');
@@ -41,6 +44,11 @@ export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboar
   const handleNewAlert = (newAlert: DisasterAlert) => {
     setAlerts(prev => [newAlert, ...prev]);
   };
+
+  const handleUpdateOccupancy = (shelterId: string, newOccupancy: number) => {
+    setShelters(prev => prev.map(s => s.id === shelterId ? { ...s, currentOccupancy: newOccupancy } : s));
+  };
+
 
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-8">
@@ -74,23 +82,12 @@ export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboar
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MapPin className="w-6 h-6" />
-            Live Aid Requests Map
+            <Home className="w-6 h-6" />
+            Shelter Management
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {mapImage && (
-            <div className="aspect-video w-full overflow-hidden rounded-lg border border-white/10">
-                <Image
-                    src={mapImage.imageUrl}
-                    alt={mapImage.description}
-                    data-ai-hint={mapImage.imageHint}
-                    width={1600}
-                    height={900}
-                    className="object-cover w-full h-full"
-                />
-            </div>
-          )}
+          <ShelterManagementTable shelters={shelters} onUpdateOccupancy={handleUpdateOccupancy}/>
         </CardContent>
       </Card>
       
