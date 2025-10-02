@@ -61,12 +61,12 @@ export function InventoryDashboard({ initialInventory, requests }: InventoryDash
     
     return (
         <div className="container mx-auto p-4 md:p-8 space-y-8">
-            <div className="glassmorphic-header">
+            <div className="flex flex-col">
                 <h1 className="text-3xl font-bold tracking-tight font-headline">Inventory Dashboard</h1>
                 <p className="text-muted-foreground">Manage and visualize your aid supplies in real-time.</p>
             </div>
             
-            <Card className="bg-card/60 backdrop-blur-lg">
+            <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Box /> Current Stock Levels</CardTitle>
                 </CardHeader>
@@ -75,7 +75,7 @@ export function InventoryDashboard({ initialInventory, requests }: InventoryDash
                         const isLow = item.quantity <= item.threshold;
                         const percentage = (item.quantity / (item.threshold * 3)) * 100;
                         return (
-                            <Card key={item.id} className="bg-background/80">
+                            <Card key={item.id}>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium capitalize">{item.name}</CardTitle>
                                     {itemIcons[item.id]}
@@ -93,14 +93,14 @@ export function InventoryDashboard({ initialInventory, requests }: InventoryDash
             </Card>
 
             <div className="grid gap-8 lg:grid-cols-3">
-                 <Card className="lg:col-span-2 bg-card/60 backdrop-blur-lg">
+                 <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><FileText /> Need Estimation</CardTitle>
                         <CardDescription>Comparing pending victim requests against available inventory.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {needEstimation.map(item => (
-                            <div key={item.id} className="flex items-center justify-between p-2 rounded-md bg-background/80">
+                            <div key={item.id} className="flex items-center justify-between p-2 rounded-md border">
                                 <span className="font-medium capitalize">{item.name}</span>
                                 <div className="flex items-center gap-4">
                                      <span>Needed: {item.needed}</span>
@@ -115,7 +115,7 @@ export function InventoryDashboard({ initialInventory, requests }: InventoryDash
                         ))}
                     </CardContent>
                 </Card>
-                <Card className="bg-card/60 backdrop-blur-lg">
+                <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><BarChart /> Most Requested Items</CardTitle>
                     </CardHeader>
@@ -134,7 +134,7 @@ export function InventoryDashboard({ initialInventory, requests }: InventoryDash
                     </CardContent>
                 </Card>
             </div>
-             <Card className="bg-card/60 backdrop-blur-lg">
+             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><PieChart /> Inventory Breakdown</CardTitle>
                 </CardHeader>
@@ -156,9 +156,3 @@ export function InventoryDashboard({ initialInventory, requests }: InventoryDash
         </div>
     );
 }
-
-const GlassmorphicCard = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-    <div className={`bg-white/30 backdrop-blur-lg rounded-xl shadow-lg p-6 border border-white/20 ${className}`}>
-        {children}
-    </div>
-);

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/hooks/use-toast";
 import { AidRequest, AidRequestItem } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
-import { BedDouble, Check, GlassWater, LifeBuoy, Loader2, MapPin, Pill, QrCode, ScanLine, Ship, Stethoscope, Tent, UtensilsCrossed } from "lucide-react";
+import { BedDouble, Check, GlassWater, LifeBuoy, Loader2, MapPin, Pill, ScanLine, Ship, Stethoscope, Tent, UtensilsCrossed } from "lucide-react";
 import { useState } from "react";
 
 interface TaskCardProps {

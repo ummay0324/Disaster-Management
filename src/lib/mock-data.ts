@@ -34,7 +34,7 @@ export const mockRequests: AidRequest[] = [
     id: 'req3',
     victimName: 'Community Shelter',
     location: '789 Pine Ln, Villagetown',
-    items: ['food', 'water', 'medicine'],
+    items: ['food', 'water', 'blankets'],
     status: 'delivered',
     assignedVolunteerId: 'user3',
     assignedVolunteerName: 'John Smith',
