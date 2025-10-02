@@ -4,9 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { BarChart, BedDouble, Box, GlassWater, Package, Pill, Tent, UtensilsCrossed, FileText, AlertTriangle, CheckCircle, PieChart, Loader2 } from "lucide-react";
 import { Progress } from "../ui/progress";
 import { useMemo } from "react";
-import { ResponsiveContainer, Pie, Cell, Tooltip, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { ResponsiveContainer, Pie, Cell, Tooltip, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "../ui/chart";
-import { Skeleton } from "../ui/skeleton";
 
 interface InventoryDashboardProps {
     initialInventory: InventoryItem[];
@@ -25,11 +24,11 @@ const itemIcons: Record<AidRequestItem, React.ReactNode> = {
     'life jackets': <Package className="h-6 w-6" />,
 }
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d"];
 
 export function InventoryDashboard({ initialInventory, requests, isLoading }: InventoryDashboardProps) {
 
-    const needEstimation = useMemo(() => {
+    const stockVsDemandData = useMemo(() => {
         const needed = new Map<AidRequestItem, number>();
         requests.filter(r => r.status !== 'delivered').forEach(req => {
             req.items.forEach(item => {
@@ -40,14 +39,12 @@ export function InventoryDashboard({ initialInventory, requests, isLoading }: In
         });
 
         return initialInventory.map(item => {
-            const numNeeded = needed.get(item.id) || 0;
-            const available = item.quantity;
-            const shortage = Math.max(0, numNeeded - available);
-            return { ...item, needed: numNeeded, shortage };
+            const demand = needed.get(item.id) || 0;
+            return { name: item.name, stock: item.quantity, demand };
         });
     }, [initialInventory, requests]);
 
-    const mostRequestedData = useMemo(() => {
+    const demandDistributionData = useMemo(() => {
         const counts = new Map<AidRequestItem, number>();
         requests.forEach(req => {
             req.items.forEach(item => {
@@ -58,8 +55,6 @@ export function InventoryDashboard({ initialInventory, requests, isLoading }: In
         });
         return Array.from(counts.entries()).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
     }, [requests]);
-
-    const inventoryChartData = initialInventory.map(item => ({ name: item.name, value: item.quantity }));
     
     if (isLoading) {
         return (
@@ -80,7 +75,7 @@ export function InventoryDashboard({ initialInventory, requests, isLoading }: In
             
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Box /> Current Stock Levels</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Box /> Current Inventory Status</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                     {initialInventory.map(item => {
@@ -104,67 +99,59 @@ export function InventoryDashboard({ initialInventory, requests, isLoading }: In
                 </CardContent>
             </Card>
 
-            <div className="grid gap-8 lg:grid-cols-3">
-                 <Card className="lg:col-span-2">
+            <div className="grid gap-8 lg:grid-cols-5">
+                 <Card className="lg:col-span-3">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><FileText /> Need Estimation</CardTitle>
-                        <CardDescription>Comparing pending victim requests against available inventory.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {needEstimation.map(item => (
-                            <div key={item.id} className="flex items-center justify-between p-2 rounded-md border">
-                                <span className="font-medium capitalize">{item.name}</span>
-                                <div className="flex items-center gap-4">
-                                     <span>Needed: {item.needed}</span>
-                                     <span>Available: {item.quantity}</span>
-                                    {item.shortage > 0 ? (
-                                        <span className="flex items-center gap-1 text-destructive font-bold"><AlertTriangle className="h-4 w-4" /> Shortage: {item.shortage}</span>
-                                    ) : (
-                                        <span className="flex items-center gap-1 text-green-500 font-bold"><CheckCircle className="h-4 w-4" /> Sufficient</span>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><BarChart /> Most Requested Items</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><BarChart /> Stock vs. Demand</CardTitle>
+                        <CardDescription>Comparing available inventory with outstanding victim requests.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ChartContainer config={{}} className="h-[250px] w-full">
+                        <ChartContainer config={{}} className="h-[300px] w-full">
                              <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={mostRequestedData} layout="vertical" margin={{ left: 20, right: 20 }}>
+                                <BarChart data={stockVsDemandData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                                     <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis type="number" />
-                                    <YAxis dataKey="name" type="category" width={60} tick={{fontSize: 12}}/>
-                                    <Tooltip cursor={{fill: 'hsl(var(--muted))'}} content={<ChartTooltipContent />} />
-                                    <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                                    <XAxis dataKey="name" tick={{fontSize: 12}} />
+                                    <YAxis />
+                                    <Tooltip content={<ChartTooltipContent />} />
+                                    <Legend />
+                                    <Bar dataKey="stock" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="demand" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </ChartContainer>
                     </CardContent>
                 </Card>
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><PieChart /> Demand Distribution</CardTitle>
+                        <CardDescription>Breakdown of all items currently requested by victims.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex justify-center">
+                        <ChartContainer config={{}} className="h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie data={demandDistributionData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                                        const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                                        const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                                        return (
+                                        <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={12}>
+                                            {`${(percent * 100).toFixed(0)}%`}
+                                        </text>
+                                        );
+                                    }}>
+                                        {demandDistributionData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip content={<ChartTooltipContent />} />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
+                    </CardContent>
+                </Card>
             </div>
-             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><PieChart /> Inventory Breakdown</CardTitle>
-                </CardHeader>
-                <CardContent className="flex justify-center">
-                    <ChartContainer config={{}} className="h-[300px] w-full max-w-lg">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie data={inventoryChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label>
-                                    {inventoryChartData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip content={<ChartTooltipContent />} />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </ChartContainer>
-                </CardContent>
-            </Card>
         </div>
     );
 }
