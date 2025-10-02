@@ -20,7 +20,7 @@ export function Chat() {
 
     const userMessage: ChatMessage = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
-setInput('');
+    setInput('');
     setIsLoading(true);
 
     try {
@@ -57,7 +57,7 @@ setInput('');
     <Card className="w-full max-w-2xl h-[90vh] flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Bot /> ReliefLink Assistant
+          <Bot /> DisasterAid Assistant
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">

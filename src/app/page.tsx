@@ -12,7 +12,7 @@ export default function Home() {
       <header className="px-4 lg:px-6 h-16 flex items-center border-b sticky top-0 z-50 bg-background/80 backdrop-blur-lg">
         <Link href="/" className="flex items-center justify-center gap-2">
           <HeartHandshake className="h-6 w-6 text-primary" />
-          <span className="text-xl font-bold text-foreground">ReliefLink</span>
+          <span className="text-xl font-bold text-foreground">DisasterAid</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
           <Link
@@ -51,10 +51,10 @@ export default function Home() {
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
-                    Connecting Aid with Need, Instantly
+                    Crisis Response, Simplified
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    ReliefLink is a unified platform for victims, volunteers, and organizations to coordinate disaster relief efforts efficiently and transparently.
+                    Complete disaster management solution with real-time inventory tracking, volunteer coordination, and emergency response systems. Built for NGOs and relief organizations.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -138,7 +138,7 @@ export default function Home() {
       </main>
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
         <p className="text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} ReliefLink. All rights reserved.
+          &copy; {new Date().getFullYear()} DisasterAid. All rights reserved.
         </p>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
           <Link className="text-xs hover:underline underline-offset-4" href="#">

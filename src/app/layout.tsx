@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'ReliefLink',
+  title: 'DisasterAid',
   description: 'A platform for disaster relief management.',
 };
 

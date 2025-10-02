@@ -40,7 +40,7 @@ export function Header({ user, children }: HeaderProps) {
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-lg px-4 md:px-8">
       <Link href="/" className="flex items-center gap-2">
         <HeartHandshake className="h-6 w-6 text-primary" />
-        <span className="text-xl font-bold text-foreground">ReliefLink</span>
+        <span className="text-xl font-bold text-foreground">DisasterAid</span>
       </Link>
       <div className="ml-auto flex items-center gap-4">
         {children}

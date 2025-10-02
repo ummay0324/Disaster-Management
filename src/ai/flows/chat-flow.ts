@@ -19,7 +19,7 @@ export async function chat(history: ChatHistory) {
   return stream(async (write) => {
     const { stream } = await llm.generate({
       history: history.map((msg) => ({ role: msg.role, content: [{ text: msg.content }] })),
-      prompt: 'You are a helpful assistant for ReliefLink, a disaster relief platform. Answer the user\'s questions about the platform, disaster relief, or how to get help. Be concise and friendly.',
+      prompt: 'You are a helpful assistant for DisasterAid, a disaster relief platform. Answer the user\'s questions about the platform, disaster relief, or how to get help. Be concise and friendly.',
     });
 
     for await (const chunk of stream) {
