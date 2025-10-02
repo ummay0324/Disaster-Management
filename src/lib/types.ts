@@ -17,3 +17,10 @@ export type AidRequest = {
   assignedVolunteerName?: string;
   createdAt: Date;
 };
+
+export type DisasterAlert = {
+    id: string;
+    type: 'flood' | 'earthquake' | 'fire' | 'heatwave';
+    message: string;
+    createdAt: Date;
+}

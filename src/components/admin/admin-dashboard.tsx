@@ -2,19 +2,23 @@
 
 import { AssignVolunteerDialog } from '@/components/admin/assign-volunteer-dialog';
 import { RequestsTable } from '@/components/admin/requests-table';
+import { BroadcastAlertForm } from '@/components/admin/broadcast-alert-form';
+import { AlertList } from '@/components/alert-list';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { AidRequest } from '@/lib/types';
-import { MapPin } from 'lucide-react';
+import type { AidRequest, DisasterAlert } from '@/lib/types';
+import { MapPin, Megaphone, Siren } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 
 interface AdminDashboardClientProps {
   initialRequests: AidRequest[];
+  initialAlerts: DisasterAlert[];
 }
 
-export function AdminDashboard({ initialRequests }: AdminDashboardClientProps) {
+export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboardClientProps) {
   const [requests, setRequests] = useState<AidRequest[]>(initialRequests);
+  const [alerts, setAlerts] = useState<DisasterAlert[]>(initialAlerts);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<AidRequest | null>(null);
   const mapImage = PlaceHolderImages.find((img) => img.id === 'map');
@@ -34,9 +38,38 @@ export function AdminDashboard({ initialRequests }: AdminDashboardClientProps) {
     );
   };
 
+  const handleNewAlert = (newAlert: DisasterAlert) => {
+    setAlerts(prev => [newAlert, ...prev]);
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-8">
       <h1 className="text-3xl font-bold tracking-tight font-headline">Admin Dashboard</h1>
+
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                  <Megaphone className="w-6 h-6" />
+                  Broadcast Alert
+              </CardTitle>
+          </CardHeader>
+          <CardContent>
+              <BroadcastAlertForm onAlertSent={handleNewAlert} />
+          </CardContent>
+        </Card>
+         <Card>
+          <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                  <Siren className="w-6 h-6" />
+                  Active Alerts
+              </CardTitle>
+          </CardHeader>
+          <CardContent>
+              <AlertList alerts={alerts} />
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>

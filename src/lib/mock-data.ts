@@ -1,4 +1,4 @@
-import type { AidRequest, User } from './types';
+import type { AidRequest, User, DisasterAlert } from './types';
 
 export const mockUsers: User[] = [
   { id: 'user1', name: 'Admin User', email: 'admin@relief.link', role: 'admin' },
@@ -48,4 +48,14 @@ export const mockRequests: AidRequest[] = [
     status: 'pending',
     createdAt: new Date(Date.now() - 30 * 60 * 1000), // 30 mins ago
   },
+];
+
+
+export const mockAlerts: DisasterAlert[] = [
+    {
+        id: 'alert1',
+        type: 'flood',
+        message: 'Major flood warning for the Cityville area. Please seek higher ground immediately.',
+        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+    }
 ];
