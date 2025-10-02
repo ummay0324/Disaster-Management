@@ -40,7 +40,7 @@ export function AdminHeader({ user, children }: HeaderProps) {
 
   const navLinks = [
     { href: '/admin/dashboard', label: 'Dashboard' },
-    { href: '/admin/inventory', label: 'Inventory' },
+    { href: '/inventory', label: 'Inventory' },
     { href: '/chatbot', label: 'Chatbot' },
   ];
 
