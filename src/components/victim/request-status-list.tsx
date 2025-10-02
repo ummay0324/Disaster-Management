@@ -4,7 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { AidRequest } from '@/lib/types';
 import { format } from 'date-fns';
-import { CheckCircle, CircleDot, MailQuestion, UserCheck } from 'lucide-react';
+import { CheckCircle, CircleDot, MailQuestion, UserCheck, QrCode } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import Image from 'next/image';
 
 interface RequestStatusListProps {
   requests: AidRequest[];
@@ -47,9 +50,11 @@ export function RequestStatusList({ requests }: RequestStatusListProps) {
         <CardContent className="space-y-4">
             {requests.map((request) => {
                 const status = statusConfig[request.status];
+                const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(request.id)}&size=200x200`;
+
                 return (
-                    <div key={request.id} className="border p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div>
+                    <div key={request.id} className="border p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start gap-4">
+                        <div className='flex-1'>
                             <p className="font-semibold capitalize">Request for: {request.items.join(', ')}</p>
                             <p className="text-sm text-muted-foreground">
                                 Submitted on {format(request.createdAt, 'PPP p')}
@@ -60,10 +65,30 @@ export function RequestStatusList({ requests }: RequestStatusListProps) {
                                 </p>
                             )}
                         </div>
-                        <Badge variant="outline" className={`border-2 text-base ${status.className}`}>
-                            <status.icon className="mr-2 h-4 w-4" />
-                            {status.label}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                            {request.status !== 'delivered' && (
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" size="sm"><QrCode className="mr-2 h-4 w-4"/>Show QR</Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Your Aid Request QR Code</DialogTitle>
+                                            <DialogDescription>
+                                                Show this to the volunteer to confirm your request.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className='flex justify-center p-4'>
+                                            <Image src={qrCodeUrl} alt={`QR Code for request ${request.id}`} width={200} height={200} />
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            )}
+                            <Badge variant="outline" className={`border-2 text-base ${status.className}`}>
+                                <status.icon className="mr-2 h-4 w-4" />
+                                {status.label}
+                            </Badge>
+                        </div>
                     </div>
                 );
             })}

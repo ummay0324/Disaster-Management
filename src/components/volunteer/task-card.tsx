@@ -3,15 +3,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { AidRequest, AidRequestItem } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
-import { Check, GlassWater, LifeBuoy, Loader2, MapPin, Pill, Ship, Stethoscope, Upload, UtensilsCrossed } from "lucide-react";
-import Image from "next/image";
+import { Check, GlassWater, LifeBuoy, Loader2, MapPin, Pill, QrCode, ScanLine, Ship, Stethoscope, UtensilsCrossed } from "lucide-react";
 import { useState } from "react";
 
 interface TaskCardProps {
@@ -31,22 +26,21 @@ export function TaskCard({ request }: TaskCardProps) {
     const { toast } = useToast();
     const [isDelivered, setIsDelivered] = useState(request.status === 'delivered');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const proofImage = PlaceHolderImages.find(img => img.id === 'proof');
 
-    const handleMarkAsDelivered = async () => {
+    const handleScanAndDeliver = async () => {
         setIsSubmitting(true);
-        // Simulate image upload and status update
+        // Simulate QR code scan and status update
         await new Promise(resolve => setTimeout(resolve, 1500));
         setIsDelivered(true);
         setIsSubmitting(false);
         toast({
-            title: "Task Completed",
+            title: "Request Verified & Completed",
             description: `Request from ${request.victimName} marked as delivered.`,
         });
     }
 
     return (
-        <Card className="w-full">
+        <Card className="w-full flex flex-col">
             <CardHeader>
                 <CardTitle>{request.victimName}</CardTitle>
                 <CardDescription className="flex items-center gap-2 pt-1">
@@ -54,7 +48,7 @@ export function TaskCard({ request }: TaskCardProps) {
                     {request.location}
                 </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 flex-1">
                 <div>
                     <h4 className="font-semibold mb-2">Requested Items:</h4>
                     <div className="flex flex-wrap gap-2">
@@ -77,42 +71,10 @@ export function TaskCard({ request }: TaskCardProps) {
                         Delivered
                     </Badge>
                 ) : (
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button>Mark as Delivered</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Proof of Delivery</DialogTitle>
-                                <DialogDescription>
-                                    Please upload an image as proof of delivery for the request from {request.victimName}.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="grid w-full max-w-sm items-center gap-1.5">
-                                    <Label htmlFor="picture">Picture</Label>
-                                    <Input id="picture" type="file" />
-                                 </div>
-                                {proofImage && (
-                                     <div className="w-full aspect-video overflow-hidden rounded-lg border relative">
-                                        <Image
-                                            src={proofImage.imageUrl}
-                                            alt={proofImage.description}
-                                            data-ai-hint={proofImage.imageHint}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                            <DialogFooter>
-                                <Button onClick={handleMarkAsDelivered} disabled={isSubmitting}>
-                                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Upload className="mr-2 h-4 w-4"/>}
-                                    Submit Proof
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                    <Button onClick={handleScanAndDeliver} disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <ScanLine className="mr-2 h-4 w-4"/>}
+                        Scan QR & Mark Delivered
+                    </Button>
                 )}
             </CardFooter>
         </Card>

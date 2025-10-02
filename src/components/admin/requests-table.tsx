@@ -12,7 +12,9 @@ import {
 } from '@/components/ui/table';
 import type { AidRequest } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
-import { CheckCircle, CircleDot, UserCheck } from 'lucide-react';
+import { CheckCircle, CircleDot, UserCheck, QrCode } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import Image from 'next/image';
 
 interface RequestsTableProps {
   requests: AidRequest[];
@@ -37,12 +39,15 @@ export function RequestsTable({ requests, onAssignClick }: RequestsTableProps) {
           <TableHead>Status</TableHead>
           <TableHead>Time</TableHead>
           <TableHead>Assigned To</TableHead>
+          <TableHead className="text-center">QR Code</TableHead>
           <TableHead className="text-right">Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {requests.map((request) => {
             const status = statusConfig[request.status];
+            const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(request.id)}&size=200x200`;
+
             return (
                 <TableRow key={request.id}>
                     <TableCell className="font-medium">{request.victimName}</TableCell>
@@ -56,6 +61,21 @@ export function RequestsTable({ requests, onAssignClick }: RequestsTableProps) {
                     </TableCell>
                     <TableCell>{formatDistanceToNow(request.createdAt, { addSuffix: true })}</TableCell>
                     <TableCell>{request.assignedVolunteerName || 'N/A'}</TableCell>
+                    <TableCell className="text-center">
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon"><QrCode className="h-5 w-5"/></Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Request ID: {request.id}</DialogTitle>
+                                </DialogHeader>
+                                <div className='flex justify-center p-4'>
+                                    <Image src={qrCodeUrl} alt={`QR Code for request ${request.id}`} width={200} height={200} />
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </TableCell>
                     <TableCell className="text-right">
                     {request.status === 'pending' && (
                         <Button variant="default" size="sm" onClick={() => onAssignClick(request)}>
