@@ -1,21 +1,24 @@
+'use client';
 import { Header } from '@/components/header';
-import { AlertBanner } from '@/components/alert-banner';
-import { mockUsers, mockAlerts } from '@/lib/mock-data';
-import type { User } from '@/lib/types';
+import { useAuth } from '@/firebase';
 
 export default function VolunteerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const volunteerUser = mockUsers.find(u => u.role === 'volunteer') as User;
-  // In a real app, you would fetch active alerts.
-  const latestAlert = mockAlerts.length > 0 ? mockAlerts[0] : null;
-
+  const { user, isUserLoading } = useAuth();
+  
   return (
     <div className="flex flex-col min-h-screen">
-      <Header user={volunteerUser} />
-      {latestAlert && <AlertBanner alert={latestAlert} />}
+      {!isUserLoading && user && (
+        <Header user={{
+          id: user.uid,
+          name: user.displayName || 'Anonymous Volunteer',
+          email: user.email || 'No Email',
+          role: 'volunteer'
+        }} />
+      )}
       <main className="flex-1">{children}</main>
     </div>
   );
