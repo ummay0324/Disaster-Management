@@ -20,9 +20,11 @@ export type AidRequest = {
   createdAt: Date;
 };
 
+export type DisasterType = 'flood' | 'earthquake' | 'fire' | 'heatwave';
+
 export type DisasterAlert = {
     id: string;
-    type: 'flood' | 'earthquake' | 'fire' | 'heatwave';
+    type: DisasterType;
     message: string;
     createdAt: Date;
 }

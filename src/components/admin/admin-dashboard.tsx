@@ -6,12 +6,13 @@ import { BroadcastAlertForm } from '@/components/admin/broadcast-alert-form';
 import { AlertList } from '@/components/alert-list';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { AidRequest, DisasterAlert, Shelter } from '@/lib/types';
-import { Home, MapPin, Megaphone, Siren } from 'lucide-react';
+import type { AidRequest, DisasterAlert, Shelter, DisasterType } from '@/lib/types';
+import { Home, MapPin, Megaphone, Siren, TriangleAlert } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { ShelterManagementTable } from './shelter-management-table';
 import { mockShelters } from '@/lib/mock-data';
+import { ActiveDisasterForm } from './active-disaster-form';
 
 interface AdminDashboardClientProps {
   initialRequests: AidRequest[];
@@ -22,6 +23,7 @@ export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboar
   const [requests, setRequests] = useState<AidRequest[]>(initialRequests);
   const [alerts, setAlerts] = useState<DisasterAlert[]>(initialAlerts);
   const [shelters, setShelters] = useState<Shelter[]>(mockShelters);
+  const [activeDisaster, setActiveDisaster] = useState<DisasterType>('flood');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<AidRequest | null>(null);
   const mapImage = PlaceHolderImages.find((img) => img.id === 'map');
@@ -54,8 +56,19 @@ export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboar
     <div className="container mx-auto p-4 md:p-8 space-y-8">
       <h1 className="text-3xl font-bold tracking-tight font-headline">Admin Dashboard</h1>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <Card>
+      <div className="grid gap-8 lg:grid-cols-3">
+        <Card className="lg:col-span-1">
+          <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                  <TriangleAlert className="w-6 h-6" />
+                  Active Disaster
+              </CardTitle>
+          </CardHeader>
+          <CardContent>
+              <ActiveDisasterForm currentDisaster={activeDisaster} onDisasterChange={setActiveDisaster} />
+          </CardContent>
+        </Card>
+        <Card className="lg:col-span-2">
           <CardHeader>
               <CardTitle className="flex items-center gap-2">
                   <Megaphone className="w-6 h-6" />
@@ -66,7 +79,9 @@ export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboar
               <BroadcastAlertForm onAlertSent={handleNewAlert} />
           </CardContent>
         </Card>
-         <Card>
+      </div>
+      
+      <Card>
           <CardHeader>
               <CardTitle className="flex items-center gap-2">
                   <Siren className="w-6 h-6" />
@@ -77,7 +92,6 @@ export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboar
               <AlertList alerts={alerts} />
           </CardContent>
         </Card>
-      </div>
 
       <Card>
         <CardHeader>

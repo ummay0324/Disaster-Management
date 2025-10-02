@@ -19,15 +19,16 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { GlassWater, LifeBuoy, Loader2, LocateFixed, MapPin, Pill, Ship, Stethoscope, UtensilsCrossed } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { AidRequestItem, DisasterType } from '@/lib/types';
 
-const items = [
-  { id: 'food', label: 'Food', icon: <UtensilsCrossed className="h-5 w-5" /> },
-  { id: 'water', label: 'Water', icon: <GlassWater className="h-5 w-5" /> },
-  { id: 'medicine', label: 'Medicine', icon: <Pill className="h-5 w-5" /> },
-  { id: 'medical help', label: 'Medical Help', icon: <Stethoscope className="h-5 w-5" /> },
-  { id: 'boat transport', label: 'Boat Transport', icon: <Ship className="h-5 w-5" /> },
-  { id: 'life jackets', label: 'Life Jackets', icon: <LifeBuoy className="h-5 w-5" /> },
+const allItems: { id: AidRequestItem; label: string; icon: React.ReactNode, disaster: DisasterType[] }[] = [
+  { id: 'food', label: 'Food', icon: <UtensilsCrossed className="h-5 w-5" />, disaster: ['flood', 'earthquake', 'fire', 'heatwave'] },
+  { id: 'water', label: 'Water', icon: <GlassWater className="h-5 w-5" />, disaster: ['flood', 'earthquake', 'fire', 'heatwave'] },
+  { id: 'medicine', label: 'Medicine', icon: <Pill className="h-5 w-5" />, disaster: ['flood', 'earthquake', 'fire', 'heatwave'] },
+  { id: 'medical help', label: 'Medical Help', icon: <Stethoscope className="h-5 w-5" />, disaster: ['flood', 'earthquake', 'fire', 'heatwave'] },
+  { id: 'boat transport', label: 'Boat Transport', icon: <Ship className="h-5 w-5" />, disaster: ['flood'] },
+  { id: 'life jackets', label: 'Life Jackets', icon: <LifeBuoy className="h-5 w-5" />, disaster: ['flood'] },
 ] as const;
 
 const FormSchema = z.object({
@@ -37,10 +38,19 @@ const FormSchema = z.object({
   location: z.string().min(1, { message: 'Location is required.'}),
 });
 
-export function AidRequestForm({ onSubmitSuccess }: { onSubmitSuccess: () => void }) {
+interface AidRequestFormProps {
+  onSubmitSuccess: () => void;
+  activeDisaster: DisasterType;
+}
+
+export function AidRequestForm({ onSubmitSuccess, activeDisaster }: AidRequestFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+
+  const availableItems = useMemo(() => {
+    return allItems.filter(item => item.disaster.includes(activeDisaster));
+  }, [activeDisaster]);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -68,7 +78,7 @@ export function AidRequestForm({ onSubmitSuccess }: { onSubmitSuccess: () => voi
       title: 'Request Submitted',
       description: 'Your aid request has been sent. Help is on the way.',
     });
-    form.reset();
+    form.reset({ items: [], location: form.getValues('location') });
     onSubmitSuccess();
     setIsSubmitting(false);
   }
@@ -111,11 +121,11 @@ export function AidRequestForm({ onSubmitSuccess }: { onSubmitSuccess: () => voi
                   <div className="mb-4">
                     <FormLabel className="text-base">I need...</FormLabel>
                     <FormDescription>
-                      Select all the items you require.
+                      Select all the items you require. Options are based on the current disaster type: <span className="font-bold capitalize">{activeDisaster}</span>.
                     </FormDescription>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                  {items.map((item) => (
+                  {availableItems.map((item) => (
                     <FormField
                       key={item.id}
                       control={form.control}

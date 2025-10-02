@@ -3,7 +3,7 @@
 import { AidRequestForm } from "@/components/victim/aid-request-form";
 import { RequestStatusList } from "@/components/victim/request-status-list";
 import { mockRequests, mockShelters } from "@/lib/mock-data";
-import { AidRequest, Shelter } from "@/lib/types";
+import { AidRequest, Shelter, DisasterType } from "@/lib/types";
 import { useState } from "react";
 import { ShelterList } from "@/components/victim/shelter-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Image from "next/image";
 
 export default function VictimDashboardPage() {
+    // In a real app, this would come from a global state or Firestore
+    const [activeDisaster, setActiveDisaster] = useState<DisasterType>('flood');
     // In a real app, this would be a Firestore query for the user's requests
     const initialRequests = mockRequests.filter(r => r.status !== 'delivered').slice(0, 2);
     const [myRequests, setMyRequests] = useState<AidRequest[]>(initialRequests);
@@ -37,7 +39,7 @@ export default function VictimDashboardPage() {
             
             <div className="grid gap-12 lg:grid-cols-2">
                 <div className="space-y-8">
-                    <AidRequestForm onSubmitSuccess={handleNewRequest} />
+                    <AidRequestForm onSubmitSuccess={handleNewRequest} activeDisaster={activeDisaster} />
                     <RequestStatusList requests={myRequests} />
                 </div>
                 <div className="space-y-8">
