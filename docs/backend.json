@@ -1,0 +1,286 @@
+{
+  "entities": {
+    "Victim": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Victim",
+      "type": "object",
+      "description": "Represents a victim requesting aid.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Victim entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the victim."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the victim.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Phone number of the victim."
+        },
+        "location": {
+          "type": "string",
+          "description": "Geographical coordinates of the victim's location."
+        },
+        "requestIds": {
+          "type": "array",
+          "description": "References to Requests made by the victim. (Relationship: Victim 1:N Request)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "phoneNumber",
+        "location"
+      ]
+    },
+    "Volunteer": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Volunteer",
+      "type": "object",
+      "description": "Represents a volunteer providing aid.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Volunteer entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the volunteer."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the volunteer.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Phone number of the volunteer."
+        },
+        "availability": {
+          "type": "boolean",
+          "description": "Indicates whether the volunteer is currently available to take on tasks."
+        },
+        "taskIds": {
+          "type": "array",
+          "description": "References to Tasks assigned to the volunteer. (Relationship: Volunteer 1:N Task)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "phoneNumber",
+        "availability"
+      ]
+    },
+    "Request": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Request",
+      "type": "object",
+      "description": "Represents a request for aid submitted by a victim.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Request entity."
+        },
+        "victimId": {
+          "type": "string",
+          "description": "Reference to the Victim making the request. (Relationship: Victim 1:N Request)"
+        },
+        "aidType": {
+          "type": "string",
+          "description": "Type of aid requested (food, water, medicine, medical help)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the request."
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the request (Pending, Assigned, Delivered)."
+        },
+        "taskId": {
+          "type": "string",
+          "description": "Reference to the Task associated with the request. (Relationship: Request 1:1 Task)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Date and time when the request was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "victimId",
+        "aidType",
+        "description",
+        "status"
+      ]
+    },
+    "Task": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task",
+      "type": "object",
+      "description": "Represents a task assigned to a volunteer to fulfill a request.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Task entity."
+        },
+        "requestId": {
+          "type": "string",
+          "description": "Reference to the Request associated with the task. (Relationship: Request 1:1 Task)"
+        },
+        "volunteerId": {
+          "type": "string",
+          "description": "Reference to the Volunteer assigned to the task. (Relationship: Volunteer 1:N Task)"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the task (Pending, Assigned, Delivered)."
+        },
+        "proofImageUrl": {
+          "type": "string",
+          "description": "URL of the proof image uploaded by the volunteer after delivering the aid.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "requestId",
+        "volunteerId",
+        "status"
+      ]
+    },
+    "Admin": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Admin",
+      "type": "object",
+      "description": "Represents an administrator user with elevated privileges.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Admin entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the admin."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the admin.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/victims/{victimId}",
+        "definition": {
+          "entityName": "Victim",
+          "schema": {
+            "$ref": "#/backend/entities/Victim"
+          },
+          "description": "Stores victim profiles. Path-based ownership ensures only the victim or authorized admin can access the data.",
+          "params": [
+            {
+              "name": "victimId",
+              "description": "The unique identifier of the victim."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/volunteers/{volunteerId}",
+        "definition": {
+          "entityName": "Volunteer",
+          "schema": {
+            "$ref": "#/backend/entities/Volunteer"
+          },
+          "description": "Stores volunteer profiles. Path-based ownership ensures only the volunteer or authorized admin can access the data.",
+          "params": [
+            {
+              "name": "volunteerId",
+              "description": "The unique identifier of the volunteer."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/requests/{requestId}",
+        "definition": {
+          "entityName": "Request",
+          "schema": {
+            "$ref": "#/backend/entities/Request"
+          },
+          "description": "Stores requests for aid. Includes 'victimId' for easy filtering by victim and 'status' for authorization independence, simplifying status-based access control.",
+          "params": [
+            {
+              "name": "requestId",
+              "description": "The unique identifier of the request."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/tasks/{taskId}",
+        "definition": {
+          "entityName": "Task",
+          "schema": {
+            "$ref": "#/backend/entities/Task"
+          },
+          "description": "Stores tasks assigned to volunteers. Includes 'requestId' and 'volunteerId' to link to the corresponding request and volunteer.",
+          "params": [
+            {
+              "name": "taskId",
+              "description": "The unique identifier of the task."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/admins/{adminId}",
+        "definition": {
+          "entityName": "Admin",
+          "schema": {
+            "$ref": "#/backend/entities/Admin"
+          },
+          "description": "Stores admin UIDs. Existence in this collection grants admin privileges. Uses Existence over Content.",
+          "params": [
+            {
+              "name": "adminId",
+              "description": "The unique identifier of the admin."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the ReliefLink application, focusing on secure and efficient data access for Victims, Volunteers, and Admins. Authorization Independence is achieved through denormalization, specifically by including relevant user roles or permissions directly within documents that require access control. This eliminates the need for complex `get()` calls in security rules, improving performance and security.\n\n1.  **Victims:** Each victim has a profile stored under `/victims/{victimId}`. This path-based ownership ensures only the victim (or authorized admin) can access their data. The `requestIds` field maintains the relationship with associated requests.\n\n2.  **Volunteers:** Similar to victims, volunteers have profiles stored under `/volunteers/{volunteerId}`. The `taskIds` array establishes a relationship with assigned tasks.\n\n3.  **Requests:** Requests are stored in the `/requests/{requestId}` collection. Each request includes `victimId`, enabling efficient querying for requests associated with a specific victim. For authorization independence, the `status` field is included directly within the request, simplifying security rules and enabling status-based filtering.\n\n4.  **Tasks:** Tasks are stored in the `/tasks/{taskId}` collection and include `requestId` and `volunteerId` to link them to corresponding requests and volunteers.\n\n5.  **Admins:** Admin UIDs are stored in `/admins/{adminId}`. Existence in this collection grants admin privileges.\n\nThis structure facilitates the required QAPs (Rules are not Filters) by enabling direct queries based on denormalized attributes like `status` in the `/requests` collection. For example, admins can efficiently query pending requests without requiring complex filtering logic in the security rules. Additionally, the membership model for admins (existence check in `/admins/{adminId}`) provides a clear and secure way to manage admin roles."
+  }
+}

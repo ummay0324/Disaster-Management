@@ -1,0 +1,193 @@
+/**
+ * @file Firebase Security Rules for ReliefLink Application
+ *
+ * @core_philosophy This ruleset enforces a role-based access control system with
+ *  a strong emphasis on user ownership. Volunteers and Victims can only manage
+ *  their own profiles. Admins have elevated privileges, determined by their
+ *  presence in the `/admins` collection.
+ *
+ * @data_structure
+ *  - /victims/{victimId}: Stores victim profiles, accessible only by the victim or an admin.
+ *  - /volunteers/{volunteerId}: Stores volunteer profiles, accessible only by the volunteer or an admin.
+ *  - /requests/{requestId}: Stores requests, with flexible read permissions and
+ *    write permissions restricted to authenticated users.
+ *  - /tasks/{taskId}: Stores tasks, with read permissions for all and
+ *    write permissions restricted to authenticated users.
+ *  - /admins/{adminId}: Stores admin UIDs. Existence in this collection grants admin privileges.
+ *
+ * @key_security_decisions
+ *  - Admin privileges are determined by the existence of a document in the `/admins` collection.
+ *  - Listing of users (victims, volunteers, admins) is disallowed to prevent information leakage.
+ *  - Data validation is minimal in this prototyping phase, focusing on authorization and relational integrity.
+ *
+ * @denormalization_for_authorization
+ *  - The `status` field is included directly in the `/requests/{requestId}` documents to
+ *    enable efficient querying and status-based access control without complex `get()` calls.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Checks if the current user is signed in.
+     * @return {boolean} True if the user is signed in, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the user ID matches the authenticated user's UID.
+     * @param {string} userId The user ID to check.
+     * @return {boolean} True if the user ID matches the authenticated user's UID, false otherwise.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the user exists and if the user ID matches the authenticated user's UID.
+     * @param {string} userId The user ID to check.
+     * @return {boolean} True if the user exists and the user ID matches the authenticated user's UID, false otherwise.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Checks if the current user is an admin.
+     * @return {boolean} True if the user is an admin, false otherwise.
+     */
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    /***************** Victims *******************/
+
+    /**
+     * @description Defines security rules for the /victims/{victimId} collection.
+     * @path /victims/{victimId}
+     * @allow (get) Authenticated victim with matching UID can read their own profile.
+     * @allow (create) Authenticated victim with matching UID can create their profile.
+     * @allow (update) Authenticated victim with matching UID can update their profile.
+     * @allow (delete) Authenticated victim with matching UID can delete their profile.
+     * @deny (get) Unauthenticated user cannot read any victim profile.
+     * @deny (create) Unauthenticated user cannot create any victim profile.
+     * @deny (update) Authenticated user cannot update another victim's profile.
+     * @deny (delete) Authenticated user cannot delete another victim's profile.
+     * @principle Enforces document ownership for writes.
+     */
+    match /victims/{victimId} {
+      // Read rules
+      allow get: if isOwner(victimId) || isAdmin();
+      allow list: if false;
+
+      // Write rules
+      allow create: if isOwner(victimId);
+      allow update: if isExistingOwner(victimId) || isAdmin();
+      allow delete: if isExistingOwner(victimId) || isAdmin();
+    }
+
+    /***************** Volunteers *******************/
+
+    /**
+     * @description Defines security rules for the /volunteers/{volunteerId} collection.
+     * @path /volunteers/{volunteerId}
+     * @allow (get) Authenticated volunteer with matching UID can read their own profile.
+     * @allow (create) Authenticated volunteer with matching UID can create their profile.
+     * @allow (update) Authenticated volunteer with matching UID can update their profile.
+     * @allow (delete) Authenticated volunteer with matching UID can delete their profile.
+     * @deny (get) Unauthenticated user cannot read any volunteer profile.
+     * @deny (create) Unauthenticated user cannot create any volunteer profile.
+     * @deny (update) Authenticated user cannot update another volunteer's profile.
+     * @deny (delete) Authenticated user cannot delete another volunteer's profile.
+     * @principle Enforces document ownership for writes.
+     */
+    match /volunteers/{volunteerId} {
+      // Read rules
+      allow get: if isOwner(volunteerId) || isAdmin();
+      allow list: if false;
+
+      // Write rules
+      allow create: if isOwner(volunteerId);
+      allow update: if isExistingOwner(volunteerId) || isAdmin();
+      allow delete: if isExistingOwner(volunteerId) || isAdmin();
+    }
+
+    /***************** Requests *******************/
+
+    /**
+     * @description Defines security rules for the /requests/{requestId} collection.
+     * @path /requests/{requestId}
+     * @allow (get) Anyone can read a request.
+     * @allow (create) Authenticated users can create requests.
+     * @allow (update) Authenticated users can update requests.
+     * @allow (delete) Authenticated users can delete requests.
+     * @deny (create) Unauthenticated users cannot create requests.
+     * @deny (update) Unauthenticated users cannot update requests.
+     * @deny (delete) Unauthenticated users cannot delete requests.
+     * @principle Allows public read access with write access restricted to authenticated users.
+     */
+    match /requests/{requestId} {
+      // Read rules
+      allow get: if true;
+      allow list: if true;
+
+      // Write rules
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() || isAdmin();
+      allow delete: if isSignedIn() || isAdmin();
+    }
+
+    /***************** Tasks *******************/
+
+    /**
+     * @description Defines security rules for the /tasks/{taskId} collection.
+     * @path /tasks/{taskId}
+     * @allow (get) Anyone can read a task.
+     * @allow (create) Authenticated users can create tasks.
+     * @allow (update) Authenticated users can update tasks.
+     * @allow (delete) Authenticated users can delete tasks.
+     * @deny (create) Unauthenticated users cannot create tasks.
+     * @deny (update) Unauthenticated users cannot update tasks.
+     * @deny (delete) Unauthenticated users cannot delete tasks.
+     * @principle Allows public read access with write access restricted to authenticated users.
+     */
+    match /tasks/{taskId} {
+      // Read rules
+      allow get: if true;
+      allow list: if true;
+
+      // Write rules
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() || isAdmin();
+      allow delete: if isSignedIn() || isAdmin();
+    }
+
+    /***************** Admins *******************/
+
+    /**
+     * @description Defines security rules for the /admins/{adminId} collection.
+     * @path /admins/{adminId}
+     * @allow (get) Only admins can get other admins.
+     * @allow (create) Only admins can create other admins.
+     * @allow (update) Only admins can update other admins.
+     * @allow (delete) Only admins can delete other admins.
+     * @deny (get) Unauthenticated users cannot read admin profiles.
+     * @deny (create) Unauthenticated users cannot create admin profiles.
+     * @deny (update) Authenticated users cannot update other admin's profiles.
+     * @deny (delete) Authenticated users cannot delete other admin's profiles.
+     * @principle Enforces document ownership for writes and restrict admin access.
+     */
+    match /admins/{adminId} {
+      // Read rules
+      allow get: if isAdmin();
+      allow list: if false;
+
+      // Write rules
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}
