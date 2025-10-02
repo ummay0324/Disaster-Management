@@ -54,7 +54,7 @@ export function Chat() {
   };
 
   return (
-    <Card className="w-full max-w-2xl h-[90vh] flex flex-col">
+    <Card className="w-full max-w-2xl h-[90vh] flex flex-col bg-background/50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bot /> DisasterAid Assistant
@@ -78,10 +78,10 @@ export function Chat() {
                   </Avatar>
                 )}
                 <div
-                  className={`rounded-lg px-4 py-2 max-w-[80%] ${
+                  className={`rounded-lg px-4 py-2 max-w-[80%] shadow-md ${
                     message.role === 'user'
                       ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
+                      : 'bg-muted/50 backdrop-blur-sm'
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -102,19 +102,20 @@ export function Chat() {
                       <Bot />
                     </AvatarFallback>
                   </Avatar>
-                  <div className="rounded-lg px-4 py-2 bg-muted flex items-center">
+                  <div className="rounded-lg px-4 py-2 bg-muted/50 backdrop-blur-sm flex items-center">
                       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                   </div>
               </div>
             )}
           </div>
         </ScrollArea>
-        <form onSubmit={handleSendMessage} className="flex items-center gap-2 border-t pt-4">
+        <form onSubmit={handleSendMessage} className="flex items-center gap-2 border-t pt-4 border-t-white/10">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about relief efforts..."
             disabled={isLoading}
+            className="bg-background/20 focus:bg-background/40"
           />
           <Button type="submit" disabled={isLoading || !input.trim()}>
             <Send className="h-4 w-4" />

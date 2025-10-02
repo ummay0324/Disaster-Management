@@ -45,7 +45,7 @@ export function AdminHeader({ user, children }: HeaderProps) {
   ];
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-lg px-4 md:px-8">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/30 backdrop-blur-lg px-4 md:px-8">
       <Link href="/" className="flex items-center gap-2">
         <HeartHandshake className="h-6 w-6 text-primary" />
         <span className="text-xl font-bold text-foreground">DisasterAid</span>

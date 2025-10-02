@@ -28,7 +28,7 @@ export function AlertBanner({ alert }: AlertBannerProps) {
 
   return (
     <div className="container my-4">
-      <Alert variant="destructive" className="bg-destructive/10 border-destructive/50 text-destructive-foreground relative pr-12">
+      <Alert variant="destructive" className="bg-destructive/20 border-destructive/50 text-destructive-foreground backdrop-blur-md relative pr-12">
         <Siren className="h-5 w-5 text-destructive" />
         <AlertTitle className="font-bold text-lg text-destructive flex items-center gap-2">
           <span>{Icon}</span>
