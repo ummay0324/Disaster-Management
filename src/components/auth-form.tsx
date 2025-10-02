@@ -29,6 +29,14 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import type { UserRole } from '@/lib/types';
+import { useAuth } from '@/firebase';
+import { 
+  initiateEmailSignIn, 
+  initiateEmailSignUp,
+} from '@/firebase/non-blocking-login';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc, getFirestore } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -50,6 +58,8 @@ export function AuthForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const auth = useAuth();
+  const firestore = getFirestore(auth.app);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -63,37 +73,65 @@ export function AuthForm() {
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    initiateEmailSignIn(auth, values.email, values.password);
 
-    let role: UserRole = 'victim';
-    if (values.email.startsWith('admin')) {
-      role = 'admin';
-    } else if (values.email.startsWith('volunteer')) {
-      role = 'volunteer';
-    }
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // This is a simplified role detection. 
+            // In a real app, you'd fetch the user's profile from Firestore to get their role.
+            let role: UserRole = 'victim';
+            if (values.email.includes('admin')) {
+                role = 'admin';
+            } else if (values.email.includes('volunteer')) {
+                role = 'volunteer';
+            }
 
-    toast({
-      title: 'Login Successful',
-      description: `Redirecting to your ${role} dashboard...`,
+            toast({
+                title: 'Login Successful',
+                description: `Redirecting to your ${role} dashboard...`,
+            });
+            router.push(`/${role}/dashboard`);
+        }
+        // Handle login failure in a real app, e.g. via an error listener
     });
-
-    router.push(`/${role}/dashboard`);
-    setIsLoading(false);
+    // We don't setIsLoading(false) here because we are navigating away.
   };
 
   const handleSignup = async (values: z.infer<typeof signupSchema>) => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    initiateEmailSignUp(auth, values.email, values.password);
 
-    toast({
-      title: 'Signup Successful',
-      description: `Welcome, ${values.name}! Redirecting to your ${values.role} dashboard...`,
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            const { role, name, email } = values;
+            
+            // Determine collection and data based on role
+            let collectionPath: string;
+            let userProfileData: any;
+
+            if(role === 'victim') {
+                collectionPath = 'victims';
+                userProfileData = { id: user.uid, name, email, phoneNumber: user.phoneNumber || '', location: '' };
+            } else if (role === 'volunteer') {
+                collectionPath = 'volunteers';
+                userProfileData = { id: user.uid, name, email, phoneNumber: user.phoneNumber || '', availability: true };
+            } else { // admin
+                collectionPath = 'admins';
+                userProfileData = { id: user.uid, name, email };
+            }
+
+            // Save user profile to Firestore
+            const userDocRef = doc(firestore, collectionPath, user.uid);
+            setDocumentNonBlocking(userDocRef, userProfileData, { merge: true });
+
+            toast({
+                title: 'Signup Successful',
+                description: `Welcome, ${values.name}! Redirecting to your ${values.role} dashboard...`,
+            });
+            router.push(`/${values.role}/dashboard`);
+        }
+        // Handle signup failure in a real app
     });
-
-    router.push(`/${values.role}/dashboard`);
-    setIsLoading(false);
   };
 
   return (
