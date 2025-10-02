@@ -7,11 +7,13 @@ export type User = {
   role: UserRole;
 };
 
+export type AidRequestItem = 'food' | 'water' | 'medicine' | 'medical help' | 'boat transport' | 'life jackets';
+
 export type AidRequest = {
   id: string;
   victimName: string;
   location: string;
-  items: ('food' | 'water' | 'medicine' | 'medical help')[];
+  items: AidRequestItem[];
   status: 'pending' | 'assigned' | 'delivered';
   assignedVolunteerId?: string;
   assignedVolunteerName?: string;

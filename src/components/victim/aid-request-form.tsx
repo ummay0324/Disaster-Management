@@ -18,14 +18,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { GlassWater, Loader2, LocateFixed, MapPin, Pill, Stethoscope, UtensilsCrossed } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { GlassWater, LifeBuoy, Loader2, LocateFixed, MapPin, Pill, Ship, Stethoscope, UtensilsCrossed } from 'lucide-react';
+import { useState } from 'react';
 
 const items = [
   { id: 'food', label: 'Food', icon: <UtensilsCrossed className="h-5 w-5" /> },
   { id: 'water', label: 'Water', icon: <GlassWater className="h-5 w-5" /> },
   { id: 'medicine', label: 'Medicine', icon: <Pill className="h-5 w-5" /> },
   { id: 'medical help', label: 'Medical Help', icon: <Stethoscope className="h-5 w-5" /> },
+  { id: 'boat transport', label: 'Boat Transport', icon: <Ship className="h-5 w-5" /> },
+  { id: 'life jackets', label: 'Life Jackets', icon: <LifeBuoy className="h-5 w-5" /> },
 ] as const;
 
 const FormSchema = z.object({
@@ -74,7 +76,7 @@ export function AidRequestForm({ onSubmitSuccess }: { onSubmitSuccess: () => voi
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Request Aid</CardTitle>
+        <CardTitle>Request Aid or Evacuation</CardTitle>
         <CardDescription>Fill out the form below to request assistance. Your location will be automatically detected.</CardDescription>
       </CardHeader>
       <CardContent>

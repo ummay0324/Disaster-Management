@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { AidRequest } from "@/lib/types";
+import { AidRequest, AidRequestItem } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
-import { Check, GlassWater, Loader2, MapPin, Pill, Stethoscope, Upload, UtensilsCrossed } from "lucide-react";
+import { Check, GlassWater, LifeBuoy, Loader2, MapPin, Pill, Ship, Stethoscope, Upload, UtensilsCrossed } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -18,11 +18,13 @@ interface TaskCardProps {
     request: AidRequest;
 }
 
-const itemIcons = {
+const itemIcons: Record<AidRequestItem, React.ReactNode> = {
     food: <UtensilsCrossed className="h-5 w-5" />,
     water: <GlassWater className="h-5 w-5" />,
     medicine: <Pill className="h-5 w-5" />,
     'medical help': <Stethoscope className="h-5 w-5" />,
+    'boat transport': <Ship className="h-5 w-5" />,
+    'life jackets': <LifeBuoy className="h-5 w-5" />,
 }
 
 export function TaskCard({ request }: TaskCardProps) {
