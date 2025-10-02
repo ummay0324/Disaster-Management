@@ -96,9 +96,9 @@ export default function Home() {
                 </p>
               </div>
               <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-card transition-colors">
-                <h3 className="text-lg font-bold">Volunteer Dashboard</h3>
+                <h3 className="text-lg font-bold">Volunteer Coordination</h3>
                 <p className="text-sm text-muted-foreground">
-                  Volunteers get a clear view of assigned tasks with map integration for easy navigation.
+                  Assign tasks to volunteers and monitor their progress from a centralized dashboard.
                 </p>
               </div>
               <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-card transition-colors">
@@ -108,9 +108,27 @@ export default function Home() {
                 </p>
               </div>
               <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-card transition-colors">
+                <h3 className="text-lg font-bold">Shelter Tracking</h3>
+                <p className="text-sm text-muted-foreground">
+                  Manage shelter capacity, availability, and location details in real-time.
+                </p>
+              </div>
+              <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-card transition-colors">
+                <h3 className="text-lg font-bold">Real-time Alerts</h3>
+                <p className="text-sm text-muted-foreground">
+                   Broadcast critical disaster alerts and updates to all users instantly.
+                </p>
+              </div>
+              <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-card transition-colors">
                 <h3 className="text-lg font-bold">Admin Command Center</h3>
                 <p className="text-sm text-muted-foreground">
                   A powerful web dashboard for NGOs to monitor all requests, assign volunteers, and manage operations.
+                </p>
+              </div>
+              <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-card transition-colors">
+                <h3 className="text-lg font-bold">Inventory Management</h3>
+                <p className="text-sm text-muted-foreground">
+                  Track aid supplies, manage stock levels, and get low-stock alerts with our inventory dashboard.
                 </p>
               </div>
               <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-card transition-colors">
