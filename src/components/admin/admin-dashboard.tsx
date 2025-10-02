@@ -5,10 +5,8 @@ import { RequestsTable } from '@/components/admin/requests-table';
 import { BroadcastAlertForm } from '@/components/admin/broadcast-alert-form';
 import { AlertList } from '@/components/alert-list';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { AidRequest, DisasterAlert, Shelter, DisasterType } from '@/lib/types';
-import { Home, MapPin, Megaphone, Siren, TriangleAlert } from 'lucide-react';
-import Image from 'next/image';
+import { Home, Megaphone, Siren, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { ShelterManagementTable } from './shelter-management-table';
 import { mockShelters } from '@/lib/mock-data';
@@ -26,7 +24,6 @@ export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboar
   const [activeDisaster, setActiveDisaster] = useState<DisasterType>('flood');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<AidRequest | null>(null);
-  const mapImage = PlaceHolderImages.find((img) => img.id === 'map');
 
   const handleAssignClick = (request: AidRequest) => {
     setSelectedRequest(request);
