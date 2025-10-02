@@ -1,12 +1,69 @@
 import { Button } from '@/components/ui/button';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { HeartHandshake } from 'lucide-react';
+import { HeartHandshake, PackageCheck, Route, Users, ShieldCheck, Tv, Siren, LayoutDashboard, GanttChartSquare, Smartphone } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AccessDashboardButton } from '@/components/access-dashboard-button';
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find((img) => img.id === 'hero');
+
+  const features = [
+      {
+        icon: <PackageCheck className="mb-4 h-8 w-8 text-primary" />,
+        title: "Aid Request",
+        description: "Victims can easily submit requests for essential supplies with automated location tagging.",
+        href: "/victim/dashboard"
+      },
+      {
+        icon: <Route className="mb-4 h-8 w-8 text-primary" />,
+        title: "Live Tracking",
+        description: "Track the status of your aid request from pending to delivered with real-time updates.",
+        href: "/victim/dashboard"
+      },
+      {
+        icon: <Users className="mb-4 h-8 w-8 text-primary" />,
+        title: "Volunteer Coordination",
+        description: "Assign tasks to volunteers and monitor their progress from a centralized dashboard.",
+        href: "/admin/dashboard"
+      },
+      {
+        icon: <ShieldCheck className="mb-4 h-8 w-8 text-primary" />,
+        title: "Proof of Delivery",
+        description: "Ensure accountability by uploading proof of delivery images for every completed task.",
+        href: "/volunteer/dashboard"
+      },
+      {
+        icon: <Tv className="mb-4 h-8 w-8 text-primary" />,
+        title: "Shelter Tracking",
+        description: "Manage shelter capacity, availability, and location details in real-time.",
+        href: "/admin/dashboard"
+      },
+      {
+        icon: <Siren className="mb-4 h-8 w-8 text-primary" />,
+        title: "Real-time Alerts",
+        description: "Broadcast critical disaster alerts and updates to all users instantly.",
+        href: "/admin/dashboard"
+      },
+      {
+        icon: <LayoutDashboard className="mb-4 h-8 w-8 text-primary" />,
+        title: "Admin Command Center",
+        description: "A powerful web dashboard for NGOs to monitor all requests, assign volunteers, and manage operations.",
+        href: "/admin/dashboard"
+      },
+      {
+        icon: <GanttChartSquare className="mb-4 h-8 w-8 text-primary" />,
+        title: "Inventory Management",
+        description: "Track aid supplies, manage stock levels, and get low-stock alerts with our inventory dashboard.",
+        href: "/inventory"
+      },
+      {
+        icon: <Smartphone className="mb-4 h-8 w-8 text-primary" />,
+        title: "Real-time Sync",
+        description: "Powered by Firebase, all data is synchronized in real-time across all devices.",
+        href: "/"
+      },
+  ];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -95,60 +152,17 @@ export default function Home() {
               </div>
             </div>
             <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-3 mt-12">
-              <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-white/10 transition-colors">
-                <h3 className="text-lg font-bold">Aid Request</h3>
-                <p className="text-sm text-muted-foreground">
-                  Victims can easily submit requests for essential supplies with automated location tagging.
-                </p>
-              </div>
-              <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-white/10 transition-colors">
-                <h3 className="text-lg font-bold">Live Tracking</h3>
-                <p className="text-sm text-muted-foreground">
-                  Track the status of your aid request from pending to delivered with real-time updates.
-                </p>
-              </div>
-              <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-white/10 transition-colors">
-                <h3 className="text-lg font-bold">Volunteer Coordination</h3>
-                <p className="text-sm text-muted-foreground">
-                  Assign tasks to volunteers and monitor their progress from a centralized dashboard.
-                </p>
-              </div>
-              <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-white/10 transition-colors">
-                <h3 className="text-lg font-bold">Proof of Delivery</h3>
-                <p className="text-sm text-muted-foreground">
-                  Ensure accountability by uploading proof of delivery images for every completed task.
-                </p>
-              </div>
-              <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-white/10 transition-colors">
-                <h3 className="text-lg font-bold">Shelter Tracking</h3>
-                <p className="text-sm text-muted-foreground">
-                  Manage shelter capacity, availability, and location details in real-time.
-                </p>
-              </div>
-              <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-white/10 transition-colors">
-                <h3 className="text-lg font-bold">Real-time Alerts</h3>
-                <p className="text-sm text-muted-foreground">
-                   Broadcast critical disaster alerts and updates to all users instantly.
-                </p>
-              </div>
-              <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-white/10 transition-colors">
-                <h3 className="text-lg font-bold">Admin Command Center</h3>
-                <p className="text-sm text-muted-foreground">
-                  A powerful web dashboard for NGOs to monitor all requests, assign volunteers, and manage operations.
-                </p>
-              </div>
-              <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-white/10 transition-colors">
-                <h3 className="text-lg font-bold">Inventory Management</h3>
-                <p className="text-sm text-muted-foreground">
-                  Track aid supplies, manage stock levels, and get low-stock alerts with our inventory dashboard.
-                </p>
-              </div>
-              <div className="grid gap-1 text-center p-4 rounded-lg hover:bg-white/10 transition-colors">
-                <h3 className="text-lg font-bold">Real-time Sync</h3>
-                <p className="text-sm text-muted-foreground">
-                  Powered by Firebase, all data is synchronized in real-time across all devices.
-                </p>
-              </div>
+              {features.map((feature) => (
+                <Link key={feature.title} href={feature.href} className="group">
+                    <div className="grid gap-1 text-center p-6 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl h-full">
+                        {feature.icon}
+                        <h3 className="text-lg font-bold">{feature.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                        {feature.description}
+                        </p>
+                    </div>
+                </Link>
+              ))}
             </div>
           </div>
         </section>
