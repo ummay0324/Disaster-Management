@@ -51,10 +51,10 @@ export default function Home() {
             <div className="grid gap-6 lg:grid-cols-1 lg:gap-12 text-center">
               <div className="flex flex-col items-center justify-center space-y-4">
                 <div className="space-y-2">
-                  <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
+                  <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline text-glassy-embossed">
                     Comprehensive Crisis Management
                   </h1>
-                  <p className="max-w-[600px] text-muted-foreground md:text-xl">
+                  <p className="max-w-[600px] text-muted-foreground md:text-xl mx-auto">
                     Complete disaster management solution with real-time inventory tracking, volunteer coordination, and emergency response systems. Built for NGOs and relief organizations.
                   </p>
                 </div>
@@ -83,7 +83,7 @@ export default function Home() {
                 <div className="inline-block rounded-lg bg-secondary px-3 py-1 text-sm">
                   Our Features
                 </div>
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline text-glassy-embossed">
                   A Faster, More Coordinated Response
                 </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
