@@ -2,7 +2,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { stream } from 'genkit/stream';
+import { stream } from 'genkit';
 
 const ChatMessageSchema = z.object({
   role: z.enum(['user', 'assistant']),
