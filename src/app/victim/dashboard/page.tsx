@@ -2,7 +2,6 @@
 
 import { AidRequestForm } from "@/components/victim/aid-request-form";
 import { RequestStatusList } from "@/components/victim/request-status-list";
-import { mockRequests, mockShelters } from "@/lib/mock-data";
 import { AidRequest, Shelter, DisasterType } from "@/lib/types";
 import { useState } from "react";
 import { ShelterList } from "@/components/victim/shelter-list";
@@ -10,27 +9,38 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Home, Map } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Image from "next/image";
+import { useAuth, useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection } from "firebase/firestore";
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function VictimDashboardPage() {
-    // In a real app, this would come from a global state or Firestore
+    const { user } = useAuth();
+    const firestore = useFirestore();
     const [activeDisaster, setActiveDisaster] = useState<DisasterType>('flood');
-    // In a real app, this would be a Firestore query for the user's requests
-    const initialRequests = mockRequests.filter(r => r.status !== 'delivered').slice(0, 2);
-    const [myRequests, setMyRequests] = useState<AidRequest[]>(initialRequests);
-    const shelters: Shelter[] = mockShelters;
-    const shelterMapImage = PlaceHolderImages.find((img) => img.id === 'shelter-map');
     
-    const handleNewRequest = () => {
-        // This is a simulation. In a real app, a Firestore onSnapshot listener would update the list.
-        const newRequest: AidRequest = {
-            id: `req${Date.now()}`,
-            victimName: 'Me',
-            location: 'My Current Location',
-            items: ['food', 'water'],
+    const shelterMapImage = PlaceHolderImages.find((img) => img.id === 'shelter-map');
+
+    const requestsQuery = useMemoFirebase(
+      () => user ? collection(firestore, 'requests') : null, // Simplified: In a real app, query by victimId
+      [firestore, user]
+    );
+    const { data: myRequests, isLoading: isLoadingRequests } = useCollection<AidRequest>(requestsQuery);
+
+    const sheltersQuery = useMemoFirebase(() => collection(firestore, 'shelters'), [firestore]);
+    const { data: shelters, isLoading: isLoadingShelters } = useCollection<Shelter>(sheltersQuery);
+    
+    const handleNewRequest = (newRequestData: Omit<AidRequest, 'id' | 'createdAt' | 'status' | 'victimName'>) => {
+        if (!user) return;
+        
+        const request: Omit<AidRequest, 'id'> = {
+            ...newRequestData,
+            victimName: user.displayName || "Anonymous",
             status: 'pending',
             createdAt: new Date(),
         };
-        setMyRequests(prev => [newRequest, ...prev]);
+
+        const requestsCollection = collection(firestore, 'requests');
+        addDocumentNonBlocking(requestsCollection, request);
     }
 
     return (
@@ -40,7 +50,7 @@ export default function VictimDashboardPage() {
             <div className="grid gap-12 lg:grid-cols-2">
                 <div className="space-y-8">
                     <AidRequestForm onSubmitSuccess={handleNewRequest} activeDisaster={activeDisaster} />
-                    <RequestStatusList requests={myRequests} />
+                    <RequestStatusList requests={myRequests || []} isLoading={isLoadingRequests} />
                 </div>
                 <div className="space-y-8">
                     <Card>
@@ -51,7 +61,7 @@ export default function VictimDashboardPage() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                             <ShelterList shelters={shelters} />
+                             <ShelterList shelters={shelters || []} isLoading={isLoadingShelters} />
                         </CardContent>
                     </Card>
                     <Card>

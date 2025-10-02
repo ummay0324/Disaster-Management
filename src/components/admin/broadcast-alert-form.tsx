@@ -25,7 +25,7 @@ const FormSchema = z.object({
 });
 
 interface BroadcastAlertFormProps {
-    onAlertSent: (alert: DisasterAlert) => void;
+    onAlertSent: (alert: Omit<DisasterAlert, 'id' | 'createdAt'>) => void;
 }
 
 export function BroadcastAlertForm({ onAlertSent }: BroadcastAlertFormProps) {
@@ -42,22 +42,17 @@ export function BroadcastAlertForm({ onAlertSent }: BroadcastAlertFormProps) {
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
-    // Simulate API call to broadcast the alert
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const newAlert: DisasterAlert = {
-        id: `alert-${Date.now()}`,
-        ...data,
-        createdAt: new Date(),
-    };
-
-    onAlertSent(newAlert);
+    
+    onAlertSent(data);
     
     toast({
       title: 'Alert Broadcasted!',
       description: 'The disaster alert has been sent to all users.',
     });
     form.reset();
+    
+    // Simulate a delay to show loading state, but action is fire-and-forget
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsSubmitting(false);
   }
 

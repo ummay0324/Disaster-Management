@@ -16,8 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { mockVolunteers } from '@/lib/mock-data';
-import type { AidRequest } from '@/lib/types';
+import type { AidRequest, User } from '@/lib/types';
 import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
@@ -27,6 +26,7 @@ interface AssignVolunteerDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onAssign: (requestId: string, volunteerId: string, volunteerName: string) => void;
+  volunteers: User[];
 }
 
 export function AssignVolunteerDialog({
@@ -34,6 +34,7 @@ export function AssignVolunteerDialog({
   isOpen,
   onOpenChange,
   onAssign,
+  volunteers,
 }: AssignVolunteerDialogProps) {
   const [selectedVolunteerId, setSelectedVolunteerId] = useState<string | undefined>();
   const [isAssigning, setIsAssigning] = useState(false);
@@ -43,10 +44,8 @@ export function AssignVolunteerDialog({
     if (!request || !selectedVolunteerId) return;
     
     setIsAssigning(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    const volunteer = mockVolunteers.find(v => v.id === selectedVolunteerId);
+    const volunteer = volunteers.find(v => v.id === selectedVolunteerId);
     if(volunteer) {
         onAssign(request.id, selectedVolunteerId, volunteer.name);
         toast({
@@ -55,6 +54,8 @@ export function AssignVolunteerDialog({
         });
     }
 
+    // Simulate delay for user feedback
+    await new Promise(resolve => setTimeout(resolve, 1000));
     setIsAssigning(false);
     onOpenChange(false);
     setSelectedVolunteerId(undefined);
@@ -79,7 +80,7 @@ export function AssignVolunteerDialog({
               <SelectValue placeholder="Select a volunteer" />
             </SelectTrigger>
             <SelectContent>
-              {mockVolunteers.map((volunteer) => (
+              {volunteers.map((volunteer) => (
                 <SelectItem key={volunteer.id} value={volunteer.id}>
                   {volunteer.name}
                 </SelectItem>

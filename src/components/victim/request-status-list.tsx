@@ -3,14 +3,16 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { AidRequest } from '@/lib/types';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { CheckCircle, CircleDot, MailQuestion, UserCheck, QrCode } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import Image from 'next/image';
+import { Skeleton } from '../ui/skeleton';
 
 interface RequestStatusListProps {
   requests: AidRequest[];
+  isLoading: boolean;
 }
 
 const statusConfig = {
@@ -19,7 +21,24 @@ const statusConfig = {
     delivered: { label: 'Delivered', icon: CheckCircle, className: 'text-green-500 border-green-500/50'},
 }
 
-export function RequestStatusList({ requests }: RequestStatusListProps) {
+export function RequestStatusList({ requests, isLoading }: RequestStatusListProps) {
+  if (isLoading) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <MailQuestion className="w-6 h-6"/>
+                    My Requests
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+      </Card>
+    )
+  }
+  
   if (requests.length === 0) {
     return (
         <Card>
@@ -57,7 +76,7 @@ export function RequestStatusList({ requests }: RequestStatusListProps) {
                         <div className='flex-1'>
                             <p className="font-semibold capitalize">Request for: {request.items.join(', ')}</p>
                             <p className="text-sm text-muted-foreground">
-                                Submitted on {format(request.createdAt, 'PPP p')}
+                                {request.createdAt ? `Submitted ${formatDistanceToNow(new Date(request.createdAt as any), { addSuffix: true })}` : 'Submitting...'}
                             </p>
                             {request.status === 'assigned' && request.assignedVolunteerName && (
                                 <p className="text-sm text-primary mt-1">

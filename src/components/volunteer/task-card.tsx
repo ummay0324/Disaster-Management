@@ -8,6 +8,8 @@ import { AidRequest, AidRequestItem } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
 import { BedDouble, Check, GlassWater, LifeBuoy, Loader2, MapPin, Pill, ScanLine, Ship, Stethoscope, Tent, UtensilsCrossed } from "lucide-react";
 import { useState } from "react";
+import { doc, updateDoc, getFirestore } from 'firebase/firestore';
+import { useFirebaseApp } from "@/firebase";
 
 interface TaskCardProps {
     request: AidRequest;
@@ -26,20 +28,39 @@ const itemIcons: Record<AidRequestItem, React.ReactNode> = {
 
 export function TaskCard({ request }: TaskCardProps) {
     const { toast } = useToast();
-    const [isDelivered, setIsDelivered] = useState(request.status === 'delivered');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const app = useFirebaseApp();
+    const firestore = getFirestore(app);
 
     const handleScanAndDeliver = async () => {
         setIsSubmitting(true);
-        // Simulate QR code scan and status update
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setIsDelivered(true);
-        setIsSubmitting(false);
-        toast({
-            title: "Request Verified & Completed",
-            description: `Request from ${request.victimName} marked as delivered.`,
-        });
+        
+        // In a real app, you would use a QR scanner to get the request ID.
+        // Here we simulate a successful scan.
+        const requestDocRef = doc(firestore, 'requests', request.id);
+        
+        try {
+            await updateDoc(requestDocRef, {
+                status: 'delivered'
+            });
+            
+            toast({
+                title: "Request Verified & Completed",
+                description: `Request from ${request.victimName} marked as delivered.`,
+            });
+        } catch (error) {
+            console.error("Failed to update status:", error);
+            toast({
+                variant: 'destructive',
+                title: "Update Failed",
+                description: `Could not mark request as delivered.`,
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     }
+
+    const isDelivered = request.status === 'delivered';
 
     return (
         <Card className="w-full flex flex-col">
@@ -63,8 +84,8 @@ export function TaskCard({ request }: TaskCardProps) {
                     </div>
                 </div>
                  <p className="text-sm text-muted-foreground">
-                    Assigned {formatDistanceToNow(request.createdAt, { addSuffix: true })}
-                </p>
+                    {request.createdAt ? `Assigned ${formatDistanceToNow(new Date(request.createdAt as any), { addSuffix: true })}` : ''}
+                 </p>
             </CardContent>
             <CardFooter>
                 {isDelivered ? (

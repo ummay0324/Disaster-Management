@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { BedDouble, GlassWater, LifeBuoy, Loader2, LocateFixed, MapPin, Pill, Ship, Stethoscope, Tent, UtensilsCrossed } from 'lucide-react';
 import { useState, useMemo } from 'react';
-import { AidRequestItem, DisasterType } from '@/lib/types';
+import { AidRequest, AidRequestItem, DisasterType } from '@/lib/types';
 
 const allItems: { id: AidRequestItem; label: string; icon: React.ReactNode, disaster: DisasterType[] }[] = [
   { id: 'food', label: 'Food', icon: <UtensilsCrossed className="h-5 w-5" />, disaster: ['flood', 'earthquake', 'fire', 'heatwave'] },
@@ -40,8 +40,10 @@ const FormSchema = z.object({
   location: z.string().min(1, { message: 'Location is required.'}),
 });
 
+type FormValues = z.infer<typeof FormSchema>;
+
 interface AidRequestFormProps {
-  onSubmitSuccess: () => void;
+  onSubmitSuccess: (data: Omit<AidRequest, 'id' | 'createdAt' | 'status' | 'victimName'>) => void;
   activeDisaster: DisasterType;
 }
 
@@ -54,7 +56,7 @@ export function AidRequestForm({ onSubmitSuccess, activeDisaster }: AidRequestFo
     return allItems.filter(item => item.disaster.includes(activeDisaster));
   }, [activeDisaster]);
 
-  const form = useForm<z.infer<typeof FormSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       items: [],
@@ -62,26 +64,47 @@ export function AidRequestForm({ onSubmitSuccess, activeDisaster }: AidRequestFo
     },
   });
   
-  const fetchLocation = async () => {
+  const fetchLocation = () => {
     setIsFetchingLocation(true);
-    // Simulate fetching location
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const mockLocation = "123 Disaster Ave, Emergency City";
-    form.setValue("location", mockLocation);
-    setIsFetchingLocation(false);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          // In a real app, you might reverse-geocode this. For now, we'll use coords.
+          const locationString = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          form.setValue("location", locationString);
+          setIsFetchingLocation(false);
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          toast({ variant: 'destructive', title: 'Could not get location', description: 'Please enter your location manually.'});
+          form.setValue("location", "Manual entry required");
+          setIsFetchingLocation(false);
+        }
+      );
+    } else {
+        toast({ variant: 'destructive', title: 'Geolocation not supported'});
+        setIsFetchingLocation(false);
+    }
   }
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
     
+    onSubmitSuccess({
+      location: data.location,
+      items: data.items as AidRequestItem[],
+    });
+
     toast({
       title: 'Request Submitted',
       description: 'Your aid request has been sent. Help is on the way.',
     });
+
+    // Simulate delay for user feedback
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
     form.reset({ items: [], location: form.getValues('location') });
-    onSubmitSuccess();
     setIsSubmitting(false);
   }
 
@@ -104,7 +127,7 @@ export function AidRequestForm({ onSubmitSuccess, activeDisaster }: AidRequestFo
                     <FormControl>
                         <div className="relative w-full">
                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Click to fetch location" {...field} disabled={true} />
+                            <Input placeholder="Click to fetch location" {...field} />
                         </div>
                     </FormControl>
                     <Button type="button" variant="outline" onClick={fetchLocation} disabled={isFetchingLocation}>

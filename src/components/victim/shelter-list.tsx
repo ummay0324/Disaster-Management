@@ -2,15 +2,27 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Shelter } from '@/lib/types';
-import { Building, Users, MapPin, ExternalLink } from 'lucide-react';
+import { Building, Users, MapPin, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { Skeleton } from '../ui/skeleton';
 
 interface ShelterListProps {
   shelters: Shelter[];
+  isLoading: boolean;
 }
 
-export function ShelterList({ shelters }: ShelterListProps) {
+export function ShelterList({ shelters, isLoading }: ShelterListProps) {
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-28 w-full" />
+        <Skeleton className="h-28 w-full" />
+      </div>
+    );
+  }
+
   if (shelters.length === 0) {
     return (
       <div className="text-center py-16 border-2 border-dashed rounded-lg bg-card">

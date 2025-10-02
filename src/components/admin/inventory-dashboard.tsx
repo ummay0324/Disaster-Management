@@ -1,15 +1,17 @@
 'use client';
 import { AidRequest, AidRequestItem, InventoryItem } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { BarChart, BedDouble, Box, GlassWater, Package, Pill, Tent, UtensilsCrossed, FileText, AlertTriangle, CheckCircle, PieChart } from "lucide-react";
+import { BarChart, BedDouble, Box, GlassWater, Package, Pill, Tent, UtensilsCrossed, FileText, AlertTriangle, CheckCircle, PieChart, Loader2 } from "lucide-react";
 import { Progress } from "../ui/progress";
 import { useMemo } from "react";
 import { ResponsiveContainer, Pie, Cell, Tooltip, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "../ui/chart";
+import { Skeleton } from "../ui/skeleton";
 
 interface InventoryDashboardProps {
     initialInventory: InventoryItem[];
     requests: AidRequest[];
+    isLoading: boolean;
 }
 
 const itemIcons: Record<AidRequestItem, React.ReactNode> = {
@@ -25,7 +27,7 @@ const itemIcons: Record<AidRequestItem, React.ReactNode> = {
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
 
-export function InventoryDashboard({ initialInventory, requests }: InventoryDashboardProps) {
+export function InventoryDashboard({ initialInventory, requests, isLoading }: InventoryDashboardProps) {
 
     const needEstimation = useMemo(() => {
         const needed = new Map<AidRequestItem, number>();
@@ -59,6 +61,16 @@ export function InventoryDashboard({ initialInventory, requests }: InventoryDash
 
     const inventoryChartData = initialInventory.map(item => ({ name: item.name, value: item.quantity }));
     
+    if (isLoading) {
+        return (
+            <div className="container mx-auto p-4 md:p-8 space-y-8">
+                <div className="flex items-center justify-center h-64">
+                    <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="container mx-auto p-4 md:p-8 space-y-8">
             <div className="flex flex-col">

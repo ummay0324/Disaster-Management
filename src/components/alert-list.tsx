@@ -2,7 +2,8 @@
 
 import type { DisasterAlert } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { Skeleton } from './ui/skeleton';
 
 const alertIcons = {
   flood: '🌊',
@@ -13,9 +14,19 @@ const alertIcons = {
 
 interface AlertListProps {
   alerts: DisasterAlert[];
+  isLoading: boolean;
 }
 
-export function AlertList({ alerts }: AlertListProps) {
+export function AlertList({ alerts, isLoading }: AlertListProps) {
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    );
+  }
+
   if (alerts.length === 0) {
     return (
       <div className="text-center py-8 border-2 border-dashed rounded-lg bg-card/50">
@@ -38,7 +49,7 @@ export function AlertList({ alerts }: AlertListProps) {
                   {alert.type} Warning
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {formatDistanceToNow(alert.createdAt, { addSuffix: true })}
+                  {alert.createdAt ? formatDistanceToNow(new Date(alert.createdAt as any), { addSuffix: true }) : 'Just now'}
                 </p>
               </div>
             </div>

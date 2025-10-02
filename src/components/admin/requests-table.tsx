@@ -10,15 +10,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { AidRequest } from '@/lib/types';
+import type { AidRequest, User } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
-import { CheckCircle, CircleDot, UserCheck, QrCode } from 'lucide-react';
+import { CheckCircle, CircleDot, UserCheck, QrCode, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import Image from 'next/image';
+import { Skeleton } from '../ui/skeleton';
 
 interface RequestsTableProps {
   requests: AidRequest[];
   onAssignClick: (request: AidRequest) => void;
+  volunteers: User[];
+  isLoading: boolean;
 }
 
 const statusConfig = {
@@ -27,8 +30,18 @@ const statusConfig = {
     delivered: { label: 'Delivered', icon: CheckCircle, color: 'bg-green-500', className: 'text-green-500 border-green-500/50'},
 }
 
-export function RequestsTable({ requests, onAssignClick }: RequestsTableProps) {
+export function RequestsTable({ requests, onAssignClick, volunteers, isLoading }: RequestsTableProps) {
     
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </div>
+    )
+  }
+
   return (
     <Table>
       <TableHeader>
@@ -59,7 +72,7 @@ export function RequestsTable({ requests, onAssignClick }: RequestsTableProps) {
                             {status.label}
                         </Badge>
                     </TableCell>
-                    <TableCell>{formatDistanceToNow(request.createdAt, { addSuffix: true })}</TableCell>
+                    <TableCell>{request.createdAt ? formatDistanceToNow(new Date(request.createdAt as any), { addSuffix: true }) : 'Just now'}</TableCell>
                     <TableCell>{request.assignedVolunteerName || 'N/A'}</TableCell>
                     <TableCell className="text-center">
                         <Dialog>

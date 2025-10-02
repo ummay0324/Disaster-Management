@@ -1,10 +1,21 @@
+'use client';
 import { InventoryDashboard } from "@/components/admin/inventory-dashboard";
-import { mockInventory, mockRequests } from "@/lib/mock-data";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { AidRequest, InventoryItem } from "@/lib/types";
+import { collection } from "firebase/firestore";
 
 export default function InventoryPage() {
-    // In a real app, this data would be fetched from Firestore
-    const inventory = mockInventory;
-    const requests = mockRequests;
+    const firestore = useFirestore();
 
-    return <InventoryDashboard initialInventory={inventory} requests={requests} />;
+    const inventoryQuery = useMemoFirebase(() => collection(firestore, 'inventory'), [firestore]);
+    const { data: inventoryData, isLoading: isLoadingInventory } = useCollection<InventoryItem>(inventoryQuery);
+
+    const requestsQuery = useMemoFirebase(() => collection(firestore, 'requests'), [firestore]);
+    const { data: requestsData, isLoading: isLoadingRequests } = useCollection<AidRequest>(requestsQuery);
+
+    return <InventoryDashboard 
+        initialInventory={inventoryData || []} 
+        requests={requestsData || []}
+        isLoading={isLoadingInventory || isLoadingRequests}
+    />;
 }

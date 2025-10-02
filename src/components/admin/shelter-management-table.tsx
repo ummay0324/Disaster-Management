@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import type { Shelter } from '@/lib/types';
-import { Pencil } from 'lucide-react';
+import { Pencil, Loader2 } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -26,13 +26,25 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '../ui/skeleton';
 
 interface ShelterManagementTableProps {
   shelters: Shelter[];
   onUpdateOccupancy: (shelterId: string, newOccupancy: number) => void;
+  isLoading: boolean;
 }
 
-export function ShelterManagementTable({ shelters, onUpdateOccupancy }: ShelterManagementTableProps) {
+export function ShelterManagementTable({ shelters, onUpdateOccupancy, isLoading }: ShelterManagementTableProps) {
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </div>
+    );
+  }
+  
   return (
     <Table>
       <TableHeader>
@@ -74,8 +86,9 @@ function UpdateOccupancyDialog({ shelter, onUpdate }: { shelter: Shelter, onUpda
     const [isOpen, setIsOpen] = useState(false);
     const [newOccupancy, setNewOccupancy] = useState(shelter.currentOccupancy);
     const { toast } = useToast();
+    const [isSaving, setIsSaving] = useState(false);
 
-    const handleUpdate = () => {
+    const handleUpdate = async () => {
         if (newOccupancy > shelter.capacity || newOccupancy < 0) {
             toast({
                 variant: 'destructive',
@@ -84,11 +97,15 @@ function UpdateOccupancyDialog({ shelter, onUpdate }: { shelter: Shelter, onUpda
             });
             return;
         }
+        setIsSaving(true);
         onUpdate(shelter.id, newOccupancy);
         toast({
             title: "Occupancy Updated",
             description: `Occupancy for ${shelter.name} set to ${newOccupancy}.`
         });
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setIsSaving(false);
         setIsOpen(false);
     }
     
@@ -117,7 +134,10 @@ function UpdateOccupancyDialog({ shelter, onUpdate }: { shelter: Shelter, onUpda
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-                    <Button onClick={handleUpdate}>Save Changes</Button>
+                    <Button onClick={handleUpdate} disabled={isSaving}>
+                      {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Save Changes
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

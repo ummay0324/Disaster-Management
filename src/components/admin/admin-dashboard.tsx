@@ -5,25 +5,34 @@ import { RequestsTable } from '@/components/admin/requests-table';
 import { BroadcastAlertForm } from '@/components/admin/broadcast-alert-form';
 import { AlertList } from '@/components/alert-list';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { AidRequest, DisasterAlert, Shelter, DisasterType } from '@/lib/types';
+import type { AidRequest, DisasterAlert, Shelter, DisasterType, User } from '@/lib/types';
 import { Home, Megaphone, Siren, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { ShelterManagementTable } from './shelter-management-table';
-import { mockShelters } from '@/lib/mock-data';
 import { ActiveDisasterForm } from './active-disaster-form';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc, updateDoc } from 'firebase/firestore';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { mockVolunteers } from '@/lib/mock-data';
 
-interface AdminDashboardClientProps {
-  initialRequests: AidRequest[];
-  initialAlerts: DisasterAlert[];
-}
-
-export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboardClientProps) {
-  const [requests, setRequests] = useState<AidRequest[]>(initialRequests);
-  const [alerts, setAlerts] = useState<DisasterAlert[]>(initialAlerts);
-  const [shelters, setShelters] = useState<Shelter[]>(mockShelters);
+export function AdminDashboard() {
+  const firestore = useFirestore();
   const [activeDisaster, setActiveDisaster] = useState<DisasterType>('flood');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<AidRequest | null>(null);
+
+  const requestsQuery = useMemoFirebase(() => collection(firestore, 'requests'), [firestore]);
+  const { data: requests, isLoading: isLoadingRequests } = useCollection<AidRequest>(requestsQuery);
+
+  const alertsQuery = useMemoFirebase(() => collection(firestore, 'alerts'), [firestore]);
+  const { data: alerts, isLoading: isLoadingAlerts } = useCollection<DisasterAlert>(alertsQuery);
+
+  const sheltersQuery = useMemoFirebase(() => collection(firestore, 'shelters'), [firestore]);
+  const { data: shelters, isLoading: isLoadingShelters } = useCollection<Shelter>(sheltersQuery);
+
+  // In a real app, volunteers would be a collection in Firestore.
+  // We'll continue to use mock data for assignment simplicity for now.
+  const volunteers: User[] = mockVolunteers;
 
   const handleAssignClick = (request: AidRequest) => {
     setSelectedRequest(request);
@@ -31,21 +40,27 @@ export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboar
   };
 
   const handleAssignVolunteer = (requestId: string, volunteerId: string, volunteerName: string) => {
-    setRequests((prevRequests) =>
-      prevRequests.map((req) =>
-        req.id === requestId
-          ? { ...req, status: 'assigned', assignedVolunteerId: volunteerId, assignedVolunteerName: volunteerName }
-          : req
-      )
-    );
+    if (!requests) return;
+    const requestDocRef = doc(firestore, 'requests', requestId);
+    updateDoc(requestDocRef, {
+      status: 'assigned',
+      assignedVolunteerId: volunteerId,
+      assignedVolunteerName: volunteerName,
+    });
   };
 
-  const handleNewAlert = (newAlert: DisasterAlert) => {
-    setAlerts(prev => [newAlert, ...prev]);
+  const handleNewAlert = (newAlert: Omit<DisasterAlert, 'id' | 'createdAt'>) => {
+    const alertsCollection = collection(firestore, 'alerts');
+    addDocumentNonBlocking(alertsCollection, {
+      ...newAlert,
+      createdAt: new Date(),
+    });
   };
 
   const handleUpdateOccupancy = (shelterId: string, newOccupancy: number) => {
-    setShelters(prev => prev.map(s => s.id === shelterId ? { ...s, currentOccupancy: newOccupancy } : s));
+    if (!shelters) return;
+    const shelterDocRef = doc(firestore, 'shelters', shelterId);
+    updateDoc(shelterDocRef, { currentOccupancy: newOccupancy });
   };
 
 
@@ -86,7 +101,7 @@ export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboar
               </CardTitle>
           </CardHeader>
           <CardContent>
-              <AlertList alerts={alerts} />
+              <AlertList alerts={alerts || []} isLoading={isLoadingAlerts} />
           </CardContent>
         </Card>
 
@@ -98,7 +113,7 @@ export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboar
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ShelterManagementTable shelters={shelters} onUpdateOccupancy={handleUpdateOccupancy}/>
+          <ShelterManagementTable shelters={shelters || []} onUpdateOccupancy={handleUpdateOccupancy} isLoading={isLoadingShelters} />
         </CardContent>
       </Card>
       
@@ -107,7 +122,7 @@ export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboar
           <CardTitle>All Requests</CardTitle>
         </CardHeader>
         <CardContent>
-          <RequestsTable requests={requests} onAssignClick={handleAssignClick} />
+          <RequestsTable requests={requests || []} onAssignClick={handleAssignClick} volunteers={volunteers} isLoading={isLoadingRequests} />
         </CardContent>
       </Card>
 
@@ -116,6 +131,7 @@ export function AdminDashboard({ initialRequests, initialAlerts }: AdminDashboar
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         onAssign={handleAssignVolunteer}
+        volunteers={volunteers}
       />
     </div>
   );
