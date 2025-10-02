@@ -25,24 +25,9 @@ export default function Home() {
             className="text-sm font-medium hover:underline underline-offset-4"
             href="/login"
           >
-            Admin
-          </Link>
-          <Link
-            className="text-sm font-medium hover:underline underline-offset-4"
-            href="/login"
-          >
-            Volunteer
-          </Link>
-          <Link
-            className="text-sm font-medium hover:underline underline-offset-4"
-            href="/login"
-          >
-            Victim
+            Login
           </Link>
         </nav>
-        <Button asChild className="ml-4">
-          <Link href="/login">Get Started</Link>
-        </Button>
       </header>
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32">
@@ -58,11 +43,8 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button asChild size="lg">
-                    <Link href="/login">Request Aid</Link>
-                  </Button>
-                  <Button asChild variant="secondary" size="lg">
-                     <Link href="/login">Become a Volunteer</Link>
+                   <Button asChild size="lg">
+                    <Link href="/login">Get Started</Link>
                   </Button>
                 </div>
               </div>
