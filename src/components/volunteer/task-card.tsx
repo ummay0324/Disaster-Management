@@ -57,14 +57,14 @@ export function TaskCard({ request }: TaskCardProps) {
                     <h4 className="font-semibold mb-2">Requested Items:</h4>
                     <div className="flex flex-wrap gap-2">
                         {request.items.map(item => (
-                            <div key={item} className="flex items-center gap-2 capitalize text-gray-300 p-2 border border-white/10 rounded-md bg-black/20">
+                            <div key={item} className="flex items-center gap-2 capitalize text-muted-foreground p-2 border rounded-md bg-background">
                                 {itemIcons[item]}
                                 <span>{item}</span>
                             </div>
                         ))}
                     </div>
                 </div>
-                 <p className="text-sm text-gray-400">
+                 <p className="text-sm text-muted-foreground">
                     Assigned {formatDistanceToNow(request.createdAt, { addSuffix: true })}
                 </p>
             </CardContent>
@@ -90,7 +90,7 @@ export function TaskCard({ request }: TaskCardProps) {
                                 <div className="grid w-full max-w-sm items-center gap-1.5">
                                     <Label htmlFor="picture">Picture</Label>
                                     <Input id="picture" type="file" />
-                                </div>
+                                 </div>
                                 {proofImage && (
                                      <div className="w-full aspect-video overflow-hidden rounded-lg border relative">
                                         <Image

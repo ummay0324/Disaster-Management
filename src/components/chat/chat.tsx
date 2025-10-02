@@ -20,7 +20,7 @@ export function Chat() {
 
     const userMessage: ChatMessage = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
-    setInput('');
+setInput('');
     setIsLoading(true);
 
     try {
@@ -72,7 +72,7 @@ export function Chat() {
               >
                 {message.role === 'assistant' && (
                   <Avatar className="h-8 w-8 border-2 border-primary">
-                    <AvatarFallback className="bg-transparent">
+                    <AvatarFallback>
                       <Bot />
                     </AvatarFallback>
                   </Avatar>
@@ -81,14 +81,14 @@ export function Chat() {
                   className={`rounded-lg px-4 py-2 max-w-[80%] ${
                     message.role === 'user'
                       ? 'bg-primary text-primary-foreground'
-                      : 'bg-black/30 border border-white/10'
+                      : 'bg-muted'
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 </div>
                  {message.role === 'user' && (
-                  <Avatar className="h-8 w-8 border-2 border-white/20">
-                    <AvatarFallback className="bg-transparent">
+                  <Avatar className="h-8 w-8 border-2">
+                    <AvatarFallback>
                       <User />
                     </AvatarFallback>
                   </Avatar>
@@ -98,23 +98,22 @@ export function Chat() {
              {isLoading && messages[messages.length -1]?.role === 'user' &&(
               <div className="flex items-start gap-3">
                  <Avatar className="h-8 w-8 border-2 border-primary">
-                    <AvatarFallback className="bg-transparent">
+                    <AvatarFallback>
                       <Bot />
                     </AvatarFallback>
                   </Avatar>
-                  <div className="rounded-lg px-4 py-2 bg-black/30 border border-white/10 flex items-center">
+                  <div className="rounded-lg px-4 py-2 bg-muted flex items-center">
                       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                   </div>
               </div>
             )}
           </div>
         </ScrollArea>
-        <form onSubmit={handleSendMessage} className="flex items-center gap-2 border-t border-white/10 pt-4">
+        <form onSubmit={handleSendMessage} className="flex items-center gap-2 border-t pt-4">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about relief efforts..."
-            className="flex-1 bg-black/20 border-white/10"
             disabled={isLoading}
           />
           <Button type="submit" disabled={isLoading || !input.trim()}>

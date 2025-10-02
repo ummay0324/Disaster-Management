@@ -97,21 +97,21 @@ export function AuthForm() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-transparent p-4">
-       <Card className="w-full max-w-md mx-auto shadow-2xl bg-black/30 backdrop-blur-lg border border-white/10 text-foreground">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+       <Card className="w-full max-w-md mx-auto shadow-2xl">
         <CardHeader className="text-center">
             <div className="flex justify-center items-center gap-2 mb-4">
                 <HeartHandshake className="h-8 w-8 text-primary" />
                 <h1 className="text-3xl font-bold text-foreground">ReliefLink</h1>
             </div>
           <CardTitle className="text-2xl font-headline">Welcome</CardTitle>
-          <CardDescription className="text-gray-300">
+          <CardDescription>
             Sign in to your account or create a new one to get started.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-black/20 border border-white/10">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
@@ -132,7 +132,6 @@ export function AuthForm() {
                             placeholder="user@example.com"
                             {...field}
                             disabled={isLoading}
-                            className="bg-black/20 border-white/10"
                           />
                         </FormControl>
                         <FormMessage />
@@ -151,7 +150,6 @@ export function AuthForm() {
                             placeholder="••••••••"
                             {...field}
                             disabled={isLoading}
-                            className="bg-black/20 border-white/10"
                           />
                         </FormControl>
                         <FormMessage />
@@ -178,7 +176,7 @@ export function AuthForm() {
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="John Doe" {...field} disabled={isLoading} className="bg-black/20 border-white/10" />
+                          <Input placeholder="John Doe" {...field} disabled={isLoading} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -195,7 +193,6 @@ export function AuthForm() {
                             placeholder="user@example.com"
                             {...field}
                             disabled={isLoading}
-                            className="bg-black/20 border-white/10"
                           />
                         </FormControl>
                         <FormMessage />
@@ -214,7 +211,6 @@ export function AuthForm() {
                             placeholder="••••••••"
                             {...field}
                             disabled={isLoading}
-                            className="bg-black/20 border-white/10"
                           />
                         </FormControl>
                         <FormMessage />
