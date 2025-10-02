@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { GlassWater, LifeBuoy, Loader2, LocateFixed, MapPin, Pill, Ship, Stethoscope, UtensilsCrossed } from 'lucide-react';
+import { BedDouble, GlassWater, LifeBuoy, Loader2, LocateFixed, MapPin, Pill, Ship, Stethoscope, Tent, UtensilsCrossed } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { AidRequestItem, DisasterType } from '@/lib/types';
 
@@ -29,6 +29,8 @@ const allItems: { id: AidRequestItem; label: string; icon: React.ReactNode, disa
   { id: 'medical help', label: 'Medical Help', icon: <Stethoscope className="h-5 w-5" />, disaster: ['flood', 'earthquake', 'fire', 'heatwave'] },
   { id: 'boat transport', label: 'Boat Transport', icon: <Ship className="h-5 w-5" />, disaster: ['flood'] },
   { id: 'life jackets', label: 'Life Jackets', icon: <LifeBuoy className="h-5 w-5" />, disaster: ['flood'] },
+  { id: 'blankets', label: 'Blankets', icon: <BedDouble className="h-5 w-5" />, disaster: ['flood', 'earthquake', 'fire', 'heatwave']},
+  { id: 'tents', label: 'Tents', icon: <Tent className="h-5 w-5" />, disaster: ['flood', 'earthquake', 'fire', 'heatwave']}
 ] as const;
 
 const FormSchema = z.object({

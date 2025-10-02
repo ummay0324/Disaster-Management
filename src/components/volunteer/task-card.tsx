@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/hooks/use-toast";
 import { AidRequest, AidRequestItem } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
-import { Check, GlassWater, LifeBuoy, Loader2, MapPin, Pill, QrCode, ScanLine, Ship, Stethoscope, UtensilsCrossed } from "lucide-react";
+import { BedDouble, Check, GlassWater, LifeBuoy, Loader2, MapPin, Pill, QrCode, ScanLine, Ship, Stethoscope, Tent, UtensilsCrossed } from "lucide-react";
 import { useState } from "react";
 
 interface TaskCardProps {
@@ -20,6 +20,8 @@ const itemIcons: Record<AidRequestItem, React.ReactNode> = {
     'medical help': <Stethoscope className="h-5 w-5" />,
     'boat transport': <Ship className="h-5 w-5" />,
     'life jackets': <LifeBuoy className="h-5 w-5" />,
+    blankets: <BedDouble className="h-5 w-5" />,
+    tents: <Tent className="h-5 w-5" />,
 }
 
 export function TaskCard({ request }: TaskCardProps) {

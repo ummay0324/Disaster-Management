@@ -21,9 +21,10 @@ import { useRouter } from 'next/navigation';
 
 type HeaderProps = {
   user: User;
+  children?: React.ReactNode;
 };
 
-export function Header({ user }: HeaderProps) {
+export function Header({ user, children }: HeaderProps) {
   const router = useRouter();
 
   const handleLogout = () => {
@@ -41,7 +42,8 @@ export function Header({ user }: HeaderProps) {
         <HeartHandshake className="h-6 w-6 text-primary" />
         <span className="text-xl font-bold text-foreground">ReliefLink</span>
       </Link>
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-4">
+        {children}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">

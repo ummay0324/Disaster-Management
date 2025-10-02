@@ -7,7 +7,7 @@ export type User = {
   role: UserRole;
 };
 
-export type AidRequestItem = 'food' | 'water' | 'medicine' | 'medical help' | 'boat transport' | 'life jackets';
+export type AidRequestItem = 'food' | 'water' | 'medicine' | 'medical help' | 'boat transport' | 'life jackets' | 'blankets' | 'tents';
 
 export type AidRequest = {
   id: string;
@@ -38,3 +38,10 @@ export type Shelter = {
   latitude: number;
   longitude: number;
 };
+
+export type InventoryItem = {
+    id: AidRequestItem;
+    name: string;
+    quantity: number;
+    threshold: number;
+}

@@ -1,4 +1,4 @@
-import type { AidRequest, User, DisasterAlert, Shelter } from './types';
+import type { AidRequest, User, DisasterAlert, Shelter, InventoryItem } from './types';
 
 export const mockUsers: User[] = [
   { id: 'user1', name: 'Admin User', email: 'admin@relief.link', role: 'admin' },
@@ -48,6 +48,14 @@ export const mockRequests: AidRequest[] = [
     status: 'pending',
     createdAt: new Date(Date.now() - 30 * 60 * 1000), // 30 mins ago
   },
+   {
+    id: 'req5',
+    victimName: 'Family of 4',
+    location: '210 River Rd, Cityville',
+    items: ['tents', 'blankets', 'food'],
+    status: 'pending',
+    createdAt: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
+  },
 ];
 
 
@@ -88,4 +96,13 @@ export const mockShelters: Shelter[] = [
         latitude: 34.0450,
         longitude: -118.2300,
     }
-]
+];
+
+
+export const mockInventory: InventoryItem[] = [
+    { id: 'food', name: 'Food (meals)', quantity: 800, threshold: 200 },
+    { id: 'water', name: 'Water (liters)', quantity: 1500, threshold: 500 },
+    { id: 'medicine', name: 'Medicine (kits)', quantity: 300, threshold: 50 },
+    { id: 'blankets', name: 'Blankets', quantity: 400, threshold: 100 },
+    { id: 'tents', name: 'Tents', quantity: 90, threshold: 20 },
+];
