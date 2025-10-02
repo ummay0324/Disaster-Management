@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getFirestore, getDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import type { UserRole } from '@/lib/types';
 
 export function AccessDashboardButton() {
   const [isLoading, setIsLoading] = useState(false);
@@ -17,13 +18,14 @@ export function AccessDashboardButton() {
   const { user, isUserLoading } = useUser();
   const firestore = getFirestore(auth.app);
 
-  const getUserRole = async (uid: string) => {
+  const getUserRole = async (uid: string): Promise<UserRole> => {
       const adminDoc = await getDoc(doc(firestore, "admins", uid));
       if (adminDoc.exists()) return 'admin';
       
       const volunteerDoc = await getDoc(doc(firestore, "volunteers", uid));
       if (volunteerDoc.exists()) return 'volunteer';
       
+      // Default to victim if not found in other collections
       return 'victim';
   };
 
@@ -33,7 +35,10 @@ export function AccessDashboardButton() {
     if (user) {
         getUserRole(user.uid).then(role => {
             router.push(`/${role}/dashboard`);
-        })
+        }).catch(() => {
+            // Fallback for safety, though getUserRole should always resolve
+            router.push('/victim/dashboard');
+        });
     } else {
       initiateAnonymousSignIn(auth);
       const unsubscribe = onAuthStateChanged(auth, (newUser) => {
@@ -48,6 +53,7 @@ export function AccessDashboardButton() {
               email: 'anonymous@example.com',
               location: '',
               phoneNumber: '',
+              role: 'victim'
            }, { merge: true });
           
           router.push('/victim/dashboard');

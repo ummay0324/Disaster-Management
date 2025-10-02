@@ -5,12 +5,16 @@ export type User = {
   name: string;
   email: string;
   role: UserRole;
+  phoneNumber?: string;
+  location?: string;
+  availability?: boolean;
 };
 
 export type AidRequestItem = 'food' | 'water' | 'medicine' | 'medical help' | 'boat transport' | 'life jackets' | 'blankets' | 'tents';
 
 export type AidRequest = {
   id: string;
+  victimId: string;
   victimName: string;
   location: string;
   items: AidRequestItem[];

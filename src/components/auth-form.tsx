@@ -28,14 +28,14 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import type { UserRole } from '@/lib/types';
+import type { UserRole, User } from '@/lib/types';
 import { useAuth, useUser } from '@/firebase';
 import { 
   initiateEmailSignIn, 
   initiateEmailSignUp,
 } from '@/firebase/non-blocking-login';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { doc, getFirestore, getDoc, doc as firestoreDoc } from 'firebase/firestore';
+import { doc, getFirestore, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const loginSchema = z.object({
@@ -66,17 +66,26 @@ export function AuthForm({ isLoginPage = false }: AuthFormProps) {
   const { user: currentUser, isUserLoading } = useUser();
   const firestore = getFirestore(auth.app);
   
+  const getUserRole = async (uid: string): Promise<UserRole> => {
+      const adminDoc = await getDoc(doc(firestore, "admins", uid));
+      if (adminDoc.exists()) return 'admin';
+      
+      const volunteerDoc = await getDoc(doc(firestore, "volunteers", uid));
+      if (volunteerDoc.exists()) return 'volunteer';
+      
+      return 'victim';
+  };
+
   // Redirect logged-in users
   useEffect(() => {
-    if (!isUserLoading && currentUser && isLoginPage) {
-      // If user is on login page but already logged in, redirect them.
+    if (!isUserLoading && currentUser) {
        const redirect = async () => {
          const role = await getUserRole(currentUser.uid);
          router.push(`/${role}/dashboard`);
        }
        redirect();
     }
-  }, [currentUser, isUserLoading, isLoginPage, router]);
+  }, [currentUser, isUserLoading, router]);
 
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -88,16 +97,6 @@ export function AuthForm({ isLoginPage = false }: AuthFormProps) {
     resolver: zodResolver(signupSchema),
     defaultValues: { name: '', email: '', password: '', role: 'victim' },
   });
-
-  const getUserRole = async (uid: string): Promise<UserRole> => {
-      const adminDoc = await getDoc(firestoreDoc(firestore, "admins", uid));
-      if (adminDoc.exists()) return 'admin';
-      
-      const volunteerDoc = await getDoc(firestoreDoc(firestore, "volunteers", uid));
-      if (volunteerDoc.exists()) return 'volunteer';
-      
-      return 'victim';
-  };
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
@@ -119,23 +118,25 @@ export function AuthForm({ isLoginPage = false }: AuthFormProps) {
   const handleSignup = async (values: z.infer<typeof signupSchema>) => {
     setIsLoading(true);
     
+    initiateEmailSignUp(auth, values.email, values.password);
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
             unsubscribe();
             const { role, name, email } = values;
             
             let collectionPath: string;
-            let userProfileData: any;
+            let userProfileData: Partial<User>;
 
             if(role === 'victim') {
                 collectionPath = 'victims';
-                userProfileData = { id: user.uid, name, email, phoneNumber: user.phoneNumber || '', location: '' };
+                userProfileData = { id: user.uid, name, email, phoneNumber: user.phoneNumber || '', location: '', role: 'victim' };
             } else if (role === 'volunteer') {
                 collectionPath = 'volunteers';
-                userProfileData = { id: user.uid, name, email, phoneNumber: user.phoneNumber || '', availability: true };
+                userProfileData = { id: user.uid, name, email, phoneNumber: user.phoneNumber || '', availability: true, role: 'volunteer' };
             } else { // admin
                 collectionPath = 'admins';
-                userProfileData = { id: user.uid, name, email };
+                userProfileData = { id: user.uid, name, email, role: 'admin' };
             }
 
             const userDocRef = doc(firestore, collectionPath, user.uid);
@@ -149,7 +150,6 @@ export function AuthForm({ isLoginPage = false }: AuthFormProps) {
         }
     });
 
-    initiateEmailSignUp(auth, values.email, values.password);
   };
 
   return (
@@ -166,7 +166,7 @@ export function AuthForm({ isLoginPage = false }: AuthFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs defaultValue={isLoginPage ? "signin" : "signup"} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
