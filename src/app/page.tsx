@@ -15,12 +15,24 @@ export default function Home() {
           <HeartHandshake className="h-6 w-6 text-primary" />
           <span className="text-xl font-bold text-foreground">DisasterAid</span>
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
+        <nav className="ml-auto flex items-center gap-4 sm:gap-6">
           <Link
             className="text-sm font-medium hover:underline underline-offset-4"
-            href="/inventory"
+            href="/victim/dashboard"
           >
-            Inventory
+            Victim
+          </Link>
+          <Link
+            className="text-sm font-medium hover:underline underline-offset-4"
+            href="/admin/dashboard"
+          >
+            Admin
+          </Link>
+          <Link
+            className="text-sm font-medium hover:underline underline-offset-4"
+            href="/volunteer/dashboard"
+          >
+            Volunteer
           </Link>
           <Link
             className="text-sm font-medium hover:underline underline-offset-4"
@@ -28,12 +40,9 @@ export default function Home() {
           >
             Chatbot
           </Link>
-          <Link
-            className="text-sm font-medium hover:underline underline-offset-4"
-            href="/login"
-          >
-            Login
-          </Link>
+          <Button asChild>
+            <Link href="/login">Get Started</Link>
+          </Button>
         </nav>
       </header>
       <main className="flex-1">
