@@ -1,20 +1,36 @@
+'use client';
 import { Header } from '@/components/header';
 import { AlertBanner } from '@/components/alert-banner';
-import { mockUsers, mockAlerts } from '@/lib/mock-data';
-import type { User } from '@/lib/types';
+import { useAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import type { DisasterAlert } from '@/lib/types';
+import { collection, limit, orderBy, query } from 'firebase/firestore';
 
 export default function VictimLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const victimUser = mockUsers.find(u => u.role === 'victim') as User;
-  // In a real app, you would fetch active alerts.
-  const latestAlert = mockAlerts.length > 0 ? mockAlerts[0] : null;
+  const { user, isUserLoading } = useAuth();
+  const firestore = useFirestore();
+
+  const alertsQuery = useMemoFirebase(
+    () => query(collection(firestore, 'alerts'), orderBy('createdAt', 'desc'), limit(1)),
+    [firestore]
+  );
+  const { data: alerts, isLoading: isLoadingAlerts } = useCollection<DisasterAlert>(alertsQuery);
+
+  const latestAlert = !isLoadingAlerts && alerts && alerts.length > 0 ? alerts[0] : null;
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header user={victimUser} />
+      {!isUserLoading && user && (
+        <Header user={{
+          id: user.uid,
+          name: user.displayName || 'Anonymous Victim',
+          email: user.email || 'No Email',
+          role: 'victim'
+        }} />
+      )}
       {latestAlert && <AlertBanner alert={latestAlert} />}
       <main className="flex-1">{children}</main>
     </div>

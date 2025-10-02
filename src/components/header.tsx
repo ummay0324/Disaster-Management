@@ -18,6 +18,8 @@ import type { User } from '@/lib/types';
 import { HeartHandshake, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 type HeaderProps = {
   user: User;
@@ -26,10 +28,12 @@ type HeaderProps = {
 
 export function Header({ user, children }: HeaderProps) {
   const router = useRouter();
+  const auth = useAuth();
 
   const handleLogout = () => {
-    // In a real app, you'd call your Firebase auth signout method here.
-    router.push('/login');
+    signOut(auth).then(() => {
+      router.push('/login');
+    });
   };
 
   const getInitials = (name: string) => {

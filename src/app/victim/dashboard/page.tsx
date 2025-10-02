@@ -6,7 +6,7 @@ import { AidRequest, Shelter, DisasterType } from "@/lib/types";
 import { useState } from "react";
 import { ShelterList } from "@/components/victim/shelter-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Home, Map } from "lucide-react";
+import { Home, Loader2, Map } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Image from "next/image";
 import { useAuth, useCollection, useFirestore, useMemoFirebase } from "@/firebase";
@@ -14,7 +14,7 @@ import { collection, query, where } from "firebase/firestore";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function VictimDashboardPage() {
-    const { user } = useAuth();
+    const { user, isUserLoading: isUserAuthLoading } = useAuth();
     const firestore = useFirestore();
     const [activeDisaster, setActiveDisaster] = useState<DisasterType>('flood');
     
@@ -42,6 +42,17 @@ export default function VictimDashboardPage() {
 
         const requestsCollection = collection(firestore, 'requests');
         addDocumentNonBlocking(requestsCollection, request);
+    }
+    
+    const isPageLoading = isUserAuthLoading || (user && (isLoadingRequests || isLoadingShelters));
+
+
+    if (isPageLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+            </div>
+        );
     }
 
     return (
