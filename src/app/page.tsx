@@ -41,7 +41,7 @@ export default function Home() {
             Chatbot
           </Link>
           <Button asChild>
-            <Link href="/login">Get Started</Link>
+            <Link href="/login">Login</Link>
           </Button>
         </nav>
       </header>
@@ -58,8 +58,11 @@ export default function Home() {
                     Complete disaster management solution with real-time inventory tracking, volunteer coordination, and emergency response systems. Built for NGOs and relief organizations.
                   </p>
                 </div>
-                <div className="flex justify-center">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                    <AccessDashboardButton />
+                   <Button asChild variant="outline" size="lg">
+                     <Link href="/login">Get Started</Link>
+                   </Button>
                 </div>
               </div>
               {heroImage && (
