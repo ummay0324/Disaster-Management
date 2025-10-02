@@ -10,7 +10,7 @@ import { Home, Map } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Image from "next/image";
 import { useAuth, useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection } from "firebase/firestore";
+import { collection, query, where } from "firebase/firestore";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function VictimDashboardPage() {
@@ -21,7 +21,7 @@ export default function VictimDashboardPage() {
     const shelterMapImage = PlaceHolderImages.find((img) => img.id === 'shelter-map');
 
     const requestsQuery = useMemoFirebase(
-      () => user ? collection(firestore, 'requests') : null, // Simplified: In a real app, query by victimId
+      () => user ? query(collection(firestore, 'requests'), where('victimId', '==', user.uid)) : null,
       [firestore, user]
     );
     const { data: myRequests, isLoading: isLoadingRequests } = useCollection<AidRequest>(requestsQuery);
@@ -29,11 +29,12 @@ export default function VictimDashboardPage() {
     const sheltersQuery = useMemoFirebase(() => collection(firestore, 'shelters'), [firestore]);
     const { data: shelters, isLoading: isLoadingShelters } = useCollection<Shelter>(sheltersQuery);
     
-    const handleNewRequest = (newRequestData: Omit<AidRequest, 'id' | 'createdAt' | 'status' | 'victimName'>) => {
+    const handleNewRequest = (newRequestData: Omit<AidRequest, 'id' | 'createdAt' | 'status' | 'victimName' | 'victimId'>) => {
         if (!user) return;
         
         const request: Omit<AidRequest, 'id'> = {
             ...newRequestData,
+            victimId: user.uid,
             victimName: user.displayName || "Anonymous",
             status: 'pending',
             createdAt: new Date(),

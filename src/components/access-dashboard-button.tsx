@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@/firebase';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getFirestore, setDoc, getDoc } from 'firebase/firestore';
+import { doc, getFirestore, getDoc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export function AccessDashboardButton() {
   const [isLoading, setIsLoading] = useState(false);
@@ -35,12 +36,13 @@ export function AccessDashboardButton() {
         })
     } else {
       initiateAnonymousSignIn(auth);
-      const unsubscribe = onAuthStateChanged(auth, async (newUser) => {
+      const unsubscribe = onAuthStateChanged(auth, (newUser) => {
         if (newUser) {
           unsubscribe();
           // Create a 'victim' profile for the new anonymous user
           const userDocRef = doc(firestore, 'victims', newUser.uid);
-          await setDoc(userDocRef, { 
+          
+          setDocumentNonBlocking(userDocRef, { 
               id: newUser.uid,
               name: 'Anonymous User',
               email: 'anonymous@example.com',
