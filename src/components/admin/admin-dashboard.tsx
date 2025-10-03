@@ -11,8 +11,8 @@ import { useState } from 'react';
 import { ShelterManagementTable } from './shelter-management-table';
 import { ActiveDisasterForm } from './active-disaster-form';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, updateDoc } from 'firebase/firestore';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, doc } from 'firebase/firestore';
+import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { mockVolunteers } from '@/lib/mock-data';
 
 export function AdminDashboard() {
@@ -42,7 +42,7 @@ export function AdminDashboard() {
   const handleAssignVolunteer = (requestId: string, volunteerId: string, volunteerName: string) => {
     if (!requests) return;
     const requestDocRef = doc(firestore, 'requests', requestId);
-    updateDoc(requestDocRef, {
+    updateDocumentNonBlocking(requestDocRef, {
       status: 'assigned',
       assignedVolunteerId: volunteerId,
       assignedVolunteerName: volunteerName,
@@ -60,7 +60,7 @@ export function AdminDashboard() {
   const handleUpdateOccupancy = (shelterId: string, newOccupancy: number) => {
     if (!shelters) return;
     const shelterDocRef = doc(firestore, 'shelters', shelterId);
-    updateDoc(shelterDocRef, { currentOccupancy: newOccupancy });
+    updateDocumentNonBlocking(shelterDocRef, { currentOccupancy: newOccupancy });
   };
 
 

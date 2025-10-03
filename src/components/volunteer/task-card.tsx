@@ -8,10 +8,8 @@ import { AidRequest, AidRequestItem } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
 import { BedDouble, Check, GlassWater, LifeBuoy, Loader2, MapPin, Pill, ScanLine, Ship, Stethoscope, Tent, UtensilsCrossed } from "lucide-react";
 import { useState } from "react";
-import { doc, getFirestore, updateDoc } from 'firebase/firestore';
-import { useFirebaseApp } from "@/firebase";
-import { FirestorePermissionError } from "@/firebase/errors";
-import { errorEmitter } from "@/firebase/error-emitter";
+import { doc, getFirestore } from 'firebase/firestore';
+import { useFirebaseApp, updateDocumentNonBlocking } from "@/firebase";
 
 interface TaskCardProps {
     request: AidRequest;
@@ -42,23 +40,19 @@ export function TaskCard({ request }: TaskCardProps) {
         const requestDocRef = doc(firestore, 'requests', request.id);
         const updatedData = { status: 'delivered' };
         
-        updateDoc(requestDocRef, updatedData)
-        .then(() => {
-             toast({
-                title: "Request Verified & Completed",
-                description: `Request from ${request.victimName} marked as delivered.`,
-            });
-            // We don't stop the loading indicator here because the UI will update via the real-time listener
-        })
-        .catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: requestDocRef.path,
-                operation: 'update',
-                requestResourceData: updatedData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            setIsSubmitting(false); // Stop loading on error
+        updateDocumentNonBlocking(requestDocRef, updatedData);
+
+        // We don't need a .then() here because the UI will reactively update.
+        // We also don't need a .catch() because the non-blocking update handles it.
+        // We can show a toast optimistically.
+        toast({
+            title: "Marking as Delivered...",
+            description: `Request from ${request.victimName} will be updated shortly.`,
         });
+
+        // The loading state can be stopped after a short delay, 
+        // as the action is fire-and-forget. The UI will update via listeners.
+        setTimeout(() => setIsSubmitting(false), 2000);
     }
 
     const isDelivered = request.status === 'delivered';
