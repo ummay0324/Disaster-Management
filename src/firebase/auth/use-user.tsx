@@ -1,8 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/firebase/provider';
+import { useContext } from 'react';
+import { FirebaseContext, FirebaseContextState } from '@/firebase/provider';
 import type { User } from 'firebase/auth';
-import { onAuthStateChanged } from 'firebase/auth';
 
 export interface UserHookResult {
   user: User | null;
@@ -16,31 +15,13 @@ export interface UserHookResult {
  * @returns {UserHookResult} Object with user, isUserLoading, userError.
  */
 export const useUser = (): UserHookResult => {
-  const auth = useAuth();
-  const [user, setUser] = useState<User | null>(null);
-  const [isUserLoading, setIsUserLoading] = useState(true);
-  const [userError, setUserError] = useState<Error | null>(null);
+  const context = useContext(FirebaseContext);
 
-  useEffect(() => {
-    if (!auth) {
-      setIsUserLoading(false);
-      setUserError(new Error("Auth service not available."));
-      return;
-    }
+  if (context === undefined) {
+    throw new Error('useUser must be used within a FirebaseProvider.');
+  }
 
-    const unsubscribe = onAuthStateChanged(auth,
-      (firebaseUser) => {
-        setUser(firebaseUser);
-        setIsUserLoading(false);
-      },
-      (error) => {
-        setUserError(error);
-        setIsUserLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [auth]);
+  const { user, isUserLoading, userError } = context;
 
   return { user, isUserLoading, userError };
 };
