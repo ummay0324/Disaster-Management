@@ -1,79 +1,150 @@
 /**
- * @file Firestore Security Rules for ReliefLink
- * @description This ruleset enforces a data model that segregates user data and public data into different collections.
+ * @fileoverview Firestore Security Rules for ReliefLink application.
  *
  * Core Philosophy:
- * This ruleset prioritizes a flexible data model for rapid prototyping, while maintaining secure access controls.
- * All data access is public, without authentications.
+ * This ruleset enforces a combination of user-ownership (for profiles),
+ * role-based access (for admins), and public read access with owner-only writes
+ * (for requests and tasks). It uses path-based ownership where possible and
+ * existence checks for admin privileges.
  *
  * Data Structure:
- * - /victims/{victimId}: Stores victim profiles.
- * - /volunteers/{volunteerId}: Stores volunteer profiles.
- * - /requests/{requestId}: Stores requests for aid.
- * - /tasks/{taskId}: Stores tasks assigned to volunteers.
- * - /admins/{adminId}: Stores admin UIDs. Existence in this collection grants admin privileges.
+ * - /victims/{victimId}: Stores victim profiles. Only the victim and admins can access.
+ * - /volunteers/{volunteerId}: Stores volunteer profiles. Only the volunteer and admins can access.
+ * - /requests/{requestId}: Stores requests for aid. Publicly readable, owner-only writable.
+ * - /tasks/{taskId}: Stores tasks assigned to volunteers. Publicly readable, owner-only writable.
+ * - /admins/{adminId}: Stores admin UIDs. Existence grants admin privileges.
  *
  * Key Security Decisions:
- * - Public read and write access to all data.
+ * - No user listing is allowed for victims or volunteers.
+ * - Admins are managed via existence check in the `/admins` collection.
+ * - Public read access is granted for requests and tasks but only if the document contains the correct ownership field
  *
+ * Denormalization for Authorization:
+ * - The `requests` collection includes the `victimId` field, enabling efficient
+ *   querying and authorization based on victim ownership.
+ * - The `tasks` collection includes the `volunteerId` field, enabling efficient
+ *   querying and authorization based on volunteer ownership.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read and write victim profiles.
+     * @description Checks if the user is signed in.
+     * @param {string} userId - The user's ID.
+     * @returns {boolean} True if the user is signed in, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user is the owner of the resource.
+     * @param {string} userId - The user's ID.
+     * @returns {boolean} True if the user is the owner, false otherwise.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the authenticated user is an existing owner of the resource.
+     * @param {string} userId - The user's ID.
+     * @returns {boolean} True if the user is the owner and the resource exists, false otherwise.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Checks if the user is an admin.
+     * @returns {boolean} True if the user is an admin, false otherwise.
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    /**
+     * @description Rule for documents in the victims collection.
      * @path /victims/{victimId}
-     * @allow (get, list, create, update, delete)
-     * @principle Allows public access to all data.
+     * @allow (create) User with UID 'victimId' can create their own profile.
+     * @allow (get, update, delete) User with UID 'victimId' or an admin can access.
+     * @deny (create) User attempts to create a profile with a different ID.
+     * @deny (list) Anyone attempts to list all victims (privacy).
+     * @principle Enforces document ownership for writes, restricts reads to owner and admins.
      */
     match /victims/{victimId} {
-      allow get, list: if true;
-      allow create, update, delete: if true;
+      allow get: if isOwner(victimId) || isAdmin();
+      allow list: if false;
+      allow create: if isOwner(victimId) && request.resource.data.id == request.auth.uid;
+      allow update: if isExistingOwner(victimId) || isAdmin();
+      allow delete: if isExistingOwner(victimId) || isAdmin();
     }
 
     /**
-     * @description Allows anyone to read and write volunteer profiles.
+     * @description Rule for documents in the volunteers collection.
      * @path /volunteers/{volunteerId}
-     * @allow (get, list, create, update, delete)
-     * @principle Allows public access to all data.
+     * @allow (create) User with UID 'volunteerId' can create their own profile.
+     * @allow (get, update, delete) User with UID 'volunteerId' or an admin can access.
+     * @deny (create) User attempts to create a profile with a different ID.
+     * @deny (list) Anyone attempts to list all volunteers (privacy).
+     * @principle Enforces document ownership for writes, restricts reads to owner and admins.
      */
     match /volunteers/{volunteerId} {
-      allow get, list: if true;
-      allow create, update, delete: if true;
+      allow get: if isOwner(volunteerId) || isAdmin();
+      allow list: if false;
+      allow create: if isOwner(volunteerId) && request.resource.data.id == request.auth.uid;
+      allow update: if isExistingOwner(volunteerId) || isAdmin();
+      allow delete: if isExistingOwner(volunteerId) || isAdmin();
     }
 
     /**
-     * @description Allows anyone to read and write requests.
+     * @description Rule for documents in the requests collection.
      * @path /requests/{requestId}
-     * @allow (get, list, create, update, delete)
-     * @principle Allows public access to all data.
+     * @allow (get, list) Anyone can read requests.
+     * @allow (create) Only authenticated users can create requests, with 'victimId' matching their UID.
+     * @allow (update, delete) Only the victim or an admin can modify/delete the request.
+     * @deny (create) If the victimId does not match the authenticated user's UID
+     * @principle Public read, owner-only write, validates relational integrity on create.
      */
     match /requests/{requestId} {
       allow get, list: if true;
-      allow create, update, delete: if true;
+      allow create: if isSignedIn() && request.resource.data.victimId == request.auth.uid;
+      allow update: if (resource.data.victimId == request.auth.uid) || isAdmin() && resource != null;
+      allow delete: if (resource.data.victimId == request.auth.uid) || isAdmin() && resource != null;
     }
 
     /**
-     * @description Allows anyone to read and write tasks.
+     * @description Rule for documents in the tasks collection.
      * @path /tasks/{taskId}
-     * @allow (get, list, create, update, delete)
-     * @principle Allows public access to all data.
+     * @allow (get, list) Anyone can read tasks.
+     * @allow (create) Only authenticated users can create tasks, with 'volunteerId' matching their UID.
+     * @allow (update, delete) Only the volunteer or an admin can modify/delete the task.
+     * @deny (create) If the volunteerId does not match the authenticated user's UID
+     * @principle Public read, owner-only write, validates relational integrity on create.
      */
     match /tasks/{taskId} {
       allow get, list: if true;
-      allow create, update, delete: if true;
+      allow create: if isSignedIn() && request.resource.data.volunteerId == request.auth.uid;
+      allow update: if (resource.data.volunteerId == request.auth.uid) || isAdmin() && resource != null;
+      allow delete: if (resource.data.volunteerId == request.auth.uid) || isAdmin() && resource != null;
     }
 
     /**
-     * @description Allows anyone to read and write admins.
+     * @description Rule for documents in the admins collection.
      * @path /admins/{adminId}
-     * @allow (get, list, create, update, delete)
-     * @principle Allows public access to all data.
+     * @allow (get) Anyone can attempt to get an admin (used in the isAdmin() function).
+     * @allow (create) Only admins can create new admins.
+     * @allow (update, delete) Only admins can modify or delete admin profiles.
+     * @deny (list) Listing admins is not allowed.
+     * @principle Existence-based role management, restricts admin management to existing admins.
      */
     match /admins/{adminId} {
-      allow get, list: if true;
-      allow create, update, delete: if true;
+      allow get: if true;
+      allow list: if false;
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
     }
   }
 }
