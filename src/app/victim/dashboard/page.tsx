@@ -3,66 +3,75 @@
 import { AidRequestForm } from "@/components/victim/aid-request-form";
 import { RequestStatusList } from "@/components/victim/request-status-list";
 import { AidRequest, Shelter, DisasterType } from "@/lib/types";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShelterList } from "@/components/victim/shelter-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Home, Loader2, Map } from "lucide-react";
+import { Home, Map } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Image from "next/image";
-import { useAuth, useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDoc } from "firebase/firestore";
 
 export default function VictimDashboardPage() {
-    const { user, isUserLoading: isUserAuthLoading } = useAuth();
     const firestore = useFirestore();
     const [activeDisaster, setActiveDisaster] = useState<DisasterType>('flood');
+    const [sessionRequestId, setSessionRequestId] = useState<string | null>(null);
+    
+    useEffect(() => {
+        // On component mount, check if there's a request ID in session storage
+        const storedRequestId = sessionStorage.getItem('session_request_id');
+        if (storedRequestId) {
+            setSessionRequestId(storedRequestId);
+        }
+    }, []);
     
     const shelterMapImage = PlaceHolderImages.find((img) => img.id === 'shelter-map');
 
+    // Show all pending requests since we don't have a specific user
     const requestsQuery = useMemoFirebase(
-      () => user ? query(collection(firestore, 'requests'), where('victimId', '==', user.uid)) : null,
-      [firestore, user]
+      () => query(collection(firestore, 'requests'), where('status', '==', 'pending')),
+      [firestore]
     );
-    const { data: myRequests, isLoading: isLoadingRequests } = useCollection<AidRequest>(requestsQuery);
+    const { data: allRequests, isLoading: isLoadingRequests } = useCollection<AidRequest>(requestsQuery);
 
     const sheltersQuery = useMemoFirebase(() => collection(firestore, 'shelters'), [firestore]);
     const { data: shelters, isLoading: isLoadingShelters } = useCollection<Shelter>(sheltersQuery);
     
-    const handleNewRequest = (newRequestData: Omit<AidRequest, 'id' | 'createdAt' | 'status' | 'victimName' | 'victimId'>) => {
-        if (!user) return;
-        
+    const handleNewRequest = async (newRequestData: Omit<AidRequest, 'id' | 'createdAt' | 'status' | 'victimId'>) => {
         const request: Omit<AidRequest, 'id'> = {
             ...newRequestData,
-            victimId: user.uid,
-            victimName: user.displayName || "Anonymous",
+            victimId: 'anonymous', // No user context
             status: 'pending',
             createdAt: new Date(),
         };
 
         const requestsCollection = collection(firestore, 'requests');
-        addDocumentNonBlocking(requestsCollection, request);
+        try {
+            const docRef = await addDoc(requestsCollection, request);
+            // Store the new request ID in session storage to track it
+            sessionStorage.setItem('session_request_id', docRef.id);
+            setSessionRequestId(docRef.id);
+        } catch (error) {
+            console.error("Error adding document: ", error);
+        }
     }
     
-    const isPageLoading = isUserAuthLoading || (user && (isLoadingRequests || isLoadingShelters));
-
-
-    if (isPageLoading) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <Loader2 className="h-16 w-16 animate-spin text-primary" />
-            </div>
-        );
-    }
+    const isPageLoading = isLoadingRequests || isLoadingShelters;
 
     return (
         <div className="container mx-auto p-4 md:p-8">
-            <h1 className="text-3xl font-bold tracking-tight mb-8 font-headline">Victim Dashboard</h1>
+            <h1 className="text-3xl font-bold tracking-tight mb-8 font-headline">Request Aid</h1>
             
             <div className="grid gap-12 lg:grid-cols-2">
                 <div className="space-y-8">
                     <AidRequestForm onSubmitSuccess={handleNewRequest} activeDisaster={activeDisaster} />
-                    <RequestStatusList requests={myRequests || []} isLoading={isLoadingRequests} />
+                    <RequestStatusList 
+                        requests={allRequests || []} 
+                        isLoading={isLoadingRequests} 
+                        title="All Pending Requests"
+                        sessionRequestId={sessionRequestId}
+                    />
                 </div>
                 <div className="space-y-8">
                     <Card>

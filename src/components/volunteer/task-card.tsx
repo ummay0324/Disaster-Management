@@ -9,7 +9,8 @@ import { formatDistanceToNow } from "date-fns";
 import { BedDouble, Check, GlassWater, LifeBuoy, Loader2, MapPin, Pill, ScanLine, Ship, Stethoscope, Tent, UtensilsCrossed } from "lucide-react";
 import { useState } from "react";
 import { doc, getFirestore } from 'firebase/firestore';
-import { useFirebaseApp, updateDocumentNonBlocking } from "@/firebase";
+import { useFirebaseApp } from "@/firebase";
+import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 interface TaskCardProps {
     request: AidRequest;

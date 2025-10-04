@@ -2,22 +2,21 @@
 
 import { TaskCard } from '@/components/volunteer/task-card';
 import { AidRequest } from '@/lib/types';
-import { useAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 
 export default function VolunteerDashboardPage() {
-  const { user } = useAuth();
   const firestore = useFirestore();
 
+  // Query for tasks that are 'assigned' but not yet 'delivered'
   const tasksQuery = useMemoFirebase(
-    () => user ? query(
+    () => query(
         collection(firestore, 'requests'), 
-        where('assignedVolunteerId', '==', user.uid),
-        where('status', 'in', ['assigned', 'delivered'])
-      ) : null,
-    [firestore, user]
+        where('status', '==', 'assigned')
+      ),
+    [firestore]
   );
   
   const { data: assignedTasks, isLoading } = useCollection<AidRequest>(tasksQuery);
@@ -26,7 +25,7 @@ export default function VolunteerDashboardPage() {
   return (
     <div className="container mx-auto p-4 md:p-8">
         <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight font-headline">My Assigned Tasks</h1>
+            <h1 className="text-3xl font-bold tracking-tight font-headline">Assigned Volunteer Tasks</h1>
             <p className="text-muted-foreground mt-1">Scan the victim's QR code upon delivery to complete the task.</p>
         </div>
       

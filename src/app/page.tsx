@@ -3,7 +3,6 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { HeartHandshake, PackageCheck, Route, Users, ShieldCheck, Tv, Siren, LayoutDashboard, GanttChartSquare, Smartphone } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { AccessDashboardButton } from '@/components/access-dashboard-button';
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find((img) => img.id === 'hero');
@@ -77,19 +76,19 @@ export default function Home() {
             className="text-sm font-medium hover:underline underline-offset-4"
             href="/victim/dashboard"
           >
-            Victim
+            Request Aid
           </Link>
           <Link
             className="text-sm font-medium hover:underline underline-offset-4"
             href="/admin/dashboard"
           >
-            Admin
+            Dashboard
           </Link>
           <Link
             className="text-sm font-medium hover:underline underline-offset-4"
             href="/volunteer/dashboard"
           >
-            Volunteer
+            Volunteer Tasks
           </Link>
           <Link
             className="text-sm font-medium hover:underline underline-offset-4"
@@ -97,9 +96,6 @@ export default function Home() {
           >
             Chatbot
           </Link>
-          <Button asChild>
-            <Link href="/login">Login</Link>
-          </Button>
         </nav>
       </header>
       <main className="flex-1">
@@ -116,9 +112,11 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                   <AccessDashboardButton />
+                   <Button asChild size="lg">
+                     <Link href="/admin/dashboard">Access Dashboard</Link>
+                   </Button>
                    <Button asChild variant="outline" size="lg">
-                     <Link href="/login">Get Started</Link>
+                     <Link href="/victim/dashboard">Request Aid</Link>
                    </Button>
                 </div>
               </div>
@@ -178,7 +176,7 @@ export default function Home() {
             </div>
             <div className="mx-auto w-full max-w-sm space-y-2">
                 <Button asChild size="lg">
-                    <Link href="/login">Get Started Now</Link>
+                    <Link href="/admin/dashboard">Get Started Now</Link>
                 </Button>
             </div>
           </div>

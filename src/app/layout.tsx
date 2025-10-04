@@ -3,7 +3,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase';
-import { AuthLayout } from '@/components/auth-layout';
+import { AlertBanner } from '@/components/alert-banner';
+import { Header } from '@/components/header';
 
 export const metadata: Metadata = {
   title: 'DisasterAid',
@@ -24,9 +25,9 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-background text-foreground">
         <FirebaseClientProvider>
-          <AuthLayout>
-            {children}
-          </AuthLayout>
+          <Header />
+          <AlertBanner />
+          <main className="flex-1">{children}</main>
         </FirebaseClientProvider>
         <Toaster />
       </body>

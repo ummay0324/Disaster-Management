@@ -21,6 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { BedDouble, GlassWater, LifeBuoy, Loader2, LocateFixed, MapPin, Pill, Ship, Stethoscope, Tent, UtensilsCrossed } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { AidRequest, AidRequestItem, DisasterType } from '@/lib/types';
+import { Textarea } from '../ui/textarea';
 
 const allItems: { id: AidRequestItem; label: string; icon: React.ReactNode, disaster: DisasterType[] }[] = [
   { id: 'food', label: 'Food', icon: <UtensilsCrossed className="h-5 w-5" />, disaster: ['flood', 'earthquake', 'fire', 'heatwave'] },
@@ -38,12 +39,13 @@ const FormSchema = z.object({
     message: 'You have to select at least one item.',
   }),
   location: z.string().min(1, { message: 'Location is required.'}),
+  victimName: z.string().min(2, { message: 'Please provide a name or description (e.g., "Family of 4").' }),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
 
 interface AidRequestFormProps {
-  onSubmitSuccess: (data: Omit<AidRequest, 'id' | 'createdAt' | 'status' | 'victimName'>) => void;
+  onSubmitSuccess: (data: Omit<AidRequest, 'id' | 'createdAt' | 'status' | 'victimId'>) => void;
   activeDisaster: DisasterType;
 }
 
@@ -61,6 +63,7 @@ export function AidRequestForm({ onSubmitSuccess, activeDisaster }: AidRequestFo
     defaultValues: {
       items: [],
       location: '',
+      victimName: '',
     },
   });
   
@@ -94,6 +97,7 @@ export function AidRequestForm({ onSubmitSuccess, activeDisaster }: AidRequestFo
     onSubmitSuccess({
       location: data.location,
       items: data.items as AidRequestItem[],
+      victimName: data.victimName,
     });
 
     toast({
@@ -104,7 +108,7 @@ export function AidRequestForm({ onSubmitSuccess, activeDisaster }: AidRequestFo
     // Simulate delay for user feedback
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    form.reset({ items: [], location: form.getValues('location') });
+    form.reset({ items: [], location: form.getValues('location'), victimName: '' });
     setIsSubmitting(false);
   }
 
@@ -112,11 +116,24 @@ export function AidRequestForm({ onSubmitSuccess, activeDisaster }: AidRequestFo
     <Card>
       <CardHeader>
         <CardTitle>Request Aid or Evacuation</CardTitle>
-        <CardDescription>Fill out the form below to request assistance. Your location will be automatically detected.</CardDescription>
+        <CardDescription>Fill out the form below to request assistance. Your location can be automatically detected.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="victimName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name / Description</FormLabel>
+                   <FormControl>
+                      <Input placeholder="e.g. John D. or Family at Main St." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="location"
@@ -127,7 +144,7 @@ export function AidRequestForm({ onSubmitSuccess, activeDisaster }: AidRequestFo
                     <FormControl>
                         <div className="relative w-full">
                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Click to fetch location" {...field} />
+                            <Input placeholder="Click button or enter manually" {...field} />
                         </div>
                     </FormControl>
                     <Button type="button" variant="outline" onClick={fetchLocation} disabled={isFetchingLocation}>
