@@ -23,7 +23,7 @@ export function ShelterList({ shelters, isLoading }: ShelterListProps) {
     );
   }
 
-  if (shelters.length === 0) {
+  if (!shelters || shelters.length === 0) {
     return (
       <div className="text-center py-16 border-2 border-dashed rounded-lg bg-card">
         <h2 className="text-xl font-semibold text-muted-foreground">No shelters available.</h2>
@@ -34,7 +34,7 @@ export function ShelterList({ shelters, isLoading }: ShelterListProps) {
 
   return (
     <div className="space-y-4">
-      {shelters.map((shelter) => {
+      {shelters && shelters.map((shelter) => {
         const isFull = shelter.currentOccupancy >= shelter.capacity;
         const occupancyRate = shelter.capacity > 0 ? (shelter.currentOccupancy / shelter.capacity) * 100 : 0;
         let capacityColor = "text-green-600";
