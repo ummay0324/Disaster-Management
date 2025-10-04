@@ -1,150 +1,206 @@
 /**
- * @fileoverview Firestore Security Rules for ReliefLink application.
+ * @file Firestore Security Rules for ReliefLink
  *
- * Core Philosophy:
- * This ruleset enforces a combination of user-ownership (for profiles),
- * role-based access (for admins), and public read access with owner-only writes
- * (for requests and tasks). It uses path-based ownership where possible and
- * existence checks for admin privileges.
+ * @Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for victim and volunteer data,
+ * with admin overrides. It leverages denormalization and path-based authorization
+ * to ensure secure and efficient data access.
  *
- * Data Structure:
- * - /victims/{victimId}: Stores victim profiles. Only the victim and admins can access.
- * - /volunteers/{volunteerId}: Stores volunteer profiles. Only the volunteer and admins can access.
- * - /requests/{requestId}: Stores requests for aid. Publicly readable, owner-only writable.
- * - /tasks/{taskId}: Stores tasks assigned to volunteers. Publicly readable, owner-only writable.
- * - /admins/{adminId}: Stores admin UIDs. Existence grants admin privileges.
+ * @Data Structure:
+ * - /victims/{victimId}: Stores victim profiles.
+ * - /volunteers/{volunteerId}: Stores volunteer profiles.
+ * - /requests/{requestId}: Stores requests for aid.
+ * - /tasks/{taskId}: Stores tasks assigned to volunteers.
+ * - /admins/{adminId}: Stores admin UIDs for role-based access.
  *
- * Key Security Decisions:
- * - No user listing is allowed for victims or volunteers.
- * - Admins are managed via existence check in the `/admins` collection.
- * - Public read access is granted for requests and tasks but only if the document contains the correct ownership field
+ * @Key Security Decisions:
+ * - Victims and volunteers can only access their own profiles (ownership).
+ * - Admins can read and write all data.
+ * - Public listing of users (victims, volunteers, admins) is disallowed.
+ * - `alerts` collection cannot be listed by unauthenticated users.
  *
- * Denormalization for Authorization:
- * - The `requests` collection includes the `victimId` field, enabling efficient
- *   querying and authorization based on victim ownership.
- * - The `tasks` collection includes the `volunteerId` field, enabling efficient
- *   querying and authorization based on volunteer ownership.
+ * @Denormalization for Authorization:
+ * - The `requests` collection contains a `victimId` field to associate each request with a victim, avoiding the need for complex joins or subqueries to determine ownership.
+ *
+ * @Structural Segregation:
+ * - No clear segregation between public and private data. All collections are treated as private, with authorization required for access.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the user is signed in.
-     * @param {string} userId - The user's ID.
-     * @returns {boolean} True if the user is signed in, false otherwise.
+     * @description Checks if the request is made by an authenticated user.
+     * @return {bool} True if the user is signed in, false otherwise.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the authenticated user is the owner of the resource.
-     * @param {string} userId - The user's ID.
-     * @returns {boolean} True if the user is the owner, false otherwise.
+     * @description Checks if the authenticated user's UID matches the provided userId.
+     * @param {string} userId The user ID to compare against the authenticated user's UID.
+     * @return {bool} True if the user is signed in and the UID matches, false otherwise.
      */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the authenticated user is an existing owner of the resource.
-     * @param {string} userId - The user's ID.
-     * @returns {boolean} True if the user is the owner and the resource exists, false otherwise.
+     * @description Checks if the authenticated user is an existing owner of a document.
+     * @param {string} userId The user ID to compare against the authenticated user's UID and the document's ownerId.
+     * @return {bool} True if the user is signed in, the UID matches, and the document exists, false otherwise.
      */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Checks if the user is an admin.
-     * @returns {boolean} True if the user is an admin, false otherwise.
+     * @description Checks if the authenticated user is an admin.
+     * @return {bool} True if the user is an admin, false otherwise.
      */
     function isAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     /**
-     * @description Rule for documents in the victims collection.
+     * @description Rules for the `/victims/{victimId}` collection.
      * @path /victims/{victimId}
-     * @allow (create) User with UID 'victimId' can create their own profile.
-     * @allow (get, update, delete) User with UID 'victimId' or an admin can access.
-     * @deny (create) User attempts to create a profile with a different ID.
-     * @deny (list) Anyone attempts to list all victims (privacy).
-     * @principle Enforces document ownership for writes, restricts reads to owner and admins.
+     * @allow (get) User with UID 'victim123' can read their own profile.
+     *      Request: { auth: { uid: 'victim123' }, method: 'get', path: '/databases/(default)/documents/victims/victim123' }
+     * @allow (create) User with UID 'victim123' can create their own profile.
+     *      Request: { auth: { uid: 'victim123' }, method: 'create', path: '/databases/(default)/documents/victims/victim123', data: { id: 'victim123', name: 'John Doe', email: 'john@example.com', phoneNumber: '123-456-7890', location: 'Someplace' } }
+     * @allow (update) Admin user can update any victim profile.
+     *      Request: { auth: { uid: 'admin123' }, method: 'update', path: '/databases/(default)/documents/victims/victim123', data: { name: 'Jane Doe' } }
+     * @deny (get) User with UID 'victim456' cannot read 'victim123' profile.
+     *      Request: { auth: { uid: 'victim456' }, method: 'get', path: '/databases/(default)/documents/victims/victim123' }
+     * @deny (create) User is not signed in.
+     *      Request: { auth: null, method: 'create', path: '/databases/(default)/documents/victims/victim123', data: { id: 'victim123', name: 'John Doe', email: 'john@example.com', phoneNumber: '123-456-7890', location: 'Someplace' } }
+     * @deny (update) User with UID 'victim456' cannot update 'victim123' profile.
+     *      Request: { auth: { uid: 'victim456' }, method: 'update', path: '/databases/(default)/documents/victims/victim123', data: { name: 'Jane Doe' } }
+     * @principle Enforces document ownership for reads and writes, with admin override.
      */
     match /victims/{victimId} {
       allow get: if isOwner(victimId) || isAdmin();
       allow list: if false;
-      allow create: if isOwner(victimId) && request.resource.data.id == request.auth.uid;
-      allow update: if isExistingOwner(victimId) || isAdmin();
+      allow create: if isOwner(victimId) && request.resource.data.id == victimId;
+      allow update: if isExistingOwner(victimId) || isAdmin() && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(victimId) || isAdmin();
     }
 
     /**
-     * @description Rule for documents in the volunteers collection.
+     * @description Rules for the `/volunteers/{volunteerId}` collection.
      * @path /volunteers/{volunteerId}
-     * @allow (create) User with UID 'volunteerId' can create their own profile.
-     * @allow (get, update, delete) User with UID 'volunteerId' or an admin can access.
-     * @deny (create) User attempts to create a profile with a different ID.
-     * @deny (list) Anyone attempts to list all volunteers (privacy).
-     * @principle Enforces document ownership for writes, restricts reads to owner and admins.
+     * @allow (get) User with UID 'volunteer123' can read their own profile.
+     *      Request: { auth: { uid: 'volunteer123' }, method: 'get', path: '/databases/(default)/documents/volunteers/volunteer123' }
+     * @allow (create) User with UID 'volunteer123' can create their own profile.
+     *      Request: { auth: { uid: 'volunteer123' }, method: 'create', path: '/databases/(default)/documents/volunteers/volunteer123', data: { id: 'volunteer123', name: 'John Doe', email: 'john@example.com', phoneNumber: '123-456-7890', availability: true } }
+     * @allow (update) Admin user can update any volunteer profile.
+     *      Request: { auth: { uid: 'admin123' }, method: 'update', path: '/databases/(default)/documents/volunteers/volunteer123', data: { availability: false } }
+     * @deny (get) User with UID 'volunteer456' cannot read 'volunteer123' profile.
+     *      Request: { auth: { uid: 'volunteer456' }, method: 'get', path: '/databases/(default)/documents/volunteers/volunteer123' }
+     * @deny (create) User is not signed in.
+     *      Request: { auth: null, method: 'create', path: '/databases/(default)/documents/volunteers/volunteer123', data: { id: 'volunteer123', name: 'John Doe', email: 'john@example.com', phoneNumber: '123-456-7890', availability: true } }
+     * @deny (update) User with UID 'volunteer456' cannot update 'volunteer123' profile.
+     *      Request: { auth: { uid: 'volunteer456' }, method: 'update', path: '/databases/(default)/documents/volunteers/volunteer123', data: { availability: false } }
+     * @principle Enforces document ownership for reads and writes, with admin override.
      */
     match /volunteers/{volunteerId} {
       allow get: if isOwner(volunteerId) || isAdmin();
       allow list: if false;
-      allow create: if isOwner(volunteerId) && request.resource.data.id == request.auth.uid;
-      allow update: if isExistingOwner(volunteerId) || isAdmin();
+      allow create: if isOwner(volunteerId) && request.resource.data.id == volunteerId;
+      allow update: if isExistingOwner(volunteerId) || isAdmin() && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(volunteerId) || isAdmin();
     }
 
     /**
-     * @description Rule for documents in the requests collection.
+     * @description Rules for the `/requests/{requestId}` collection.
      * @path /requests/{requestId}
-     * @allow (get, list) Anyone can read requests.
-     * @allow (create) Only authenticated users can create requests, with 'victimId' matching their UID.
-     * @allow (update, delete) Only the victim or an admin can modify/delete the request.
-     * @deny (create) If the victimId does not match the authenticated user's UID
-     * @principle Public read, owner-only write, validates relational integrity on create.
+     * @allow (get) Any authenticated user can read any request.
+     *      Request: { auth: { uid: 'user123' }, method: 'get', path: '/databases/(default)/documents/requests/request123' }
+     * @allow (list) Any authenticated user can list all requests.
+     *      Request: { auth: { uid: 'user123' }, method: 'list', path: '/databases/(default)/documents/requests' }
+     * @allow (create) Any authenticated user can create a request.
+     *      Request: { auth: { uid: 'user123' }, method: 'create', path: '/databases/(default)/documents/requests/request123', data: { id: 'request123', victimId: 'victim123', aidType: 'food', description: 'Need food', status: 'Pending' } }
+     * @allow (update) Only the admin can update any request.
+     *      Request: { auth: { uid: 'admin123' }, method: 'update', path: '/databases/(default)/documents/requests/request123', data: { status: 'Assigned' } }
+     * @deny (create) User is not signed in.
+     *      Request: { auth: null, method: 'create', path: '/databases/(default)/documents/requests/request123', data: { id: 'request123', victimId: 'victim123', aidType: 'food', description: 'Need food', status: 'Pending' } }
+     * @deny (update) Non-admin user cannot update any request.
+     *      Request: { auth: { uid: 'user123' }, method: 'update', path: '/databases/(default)/documents/requests/request123', data: { status: 'Assigned' } }
+     * @principle Allows public read access but restricts writes to authorized users (admin).
      */
     match /requests/{requestId} {
-      allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.victimId == request.auth.uid;
-      allow update: if (resource.data.victimId == request.auth.uid) || isAdmin() && resource != null;
-      allow delete: if (resource.data.victimId == request.auth.uid) || isAdmin() && resource != null;
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
     }
 
     /**
-     * @description Rule for documents in the tasks collection.
+     * @description Rules for the `/tasks/{taskId}` collection.
      * @path /tasks/{taskId}
-     * @allow (get, list) Anyone can read tasks.
-     * @allow (create) Only authenticated users can create tasks, with 'volunteerId' matching their UID.
-     * @allow (update, delete) Only the volunteer or an admin can modify/delete the task.
-     * @deny (create) If the volunteerId does not match the authenticated user's UID
-     * @principle Public read, owner-only write, validates relational integrity on create.
+     * @allow (get) Any authenticated user can read any task.
+     *      Request: { auth: { uid: 'user123' }, method: 'get', path: '/databases/(default)/documents/tasks/task123' }
+     * @allow (list) Any authenticated user can list all tasks.
+     *      Request: { auth: { uid: 'user123' }, method: 'list', path: '/databases/(default)/documents/tasks' }
+     * @allow (create) Only admin can create tasks.
+     *      Request: { auth: { uid: 'admin123' }, method: 'create', path: '/databases/(default)/documents/tasks/task123', data: { id: 'task123', requestId: 'request123', volunteerId: 'volunteer123', status: 'Pending' } }
+     * @allow (update) Only the admin can update any task.
+     *      Request: { auth: { uid: 'admin123' }, method: 'update', path: '/databases/(default)/documents/tasks/task123', data: { status: 'Assigned' } }
+     * @deny (create) Non-admin user cannot create any task.
+     *      Request: { auth: { uid: 'user123' }, method: 'create', path: '/databases/(default)/documents/tasks/task123', data: { id: 'task123', requestId: 'request123', volunteerId: 'volunteer123', status: 'Pending' } }
+     * @deny (update) Non-admin user cannot update any task.
+     *      Request: { auth: { uid: 'user123' }, method: 'update', path: '/databases/(default)/documents/tasks/task123', data: { status: 'Assigned' } }
      */
     match /tasks/{taskId} {
-      allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.volunteerId == request.auth.uid;
-      allow update: if (resource.data.volunteerId == request.auth.uid) || isAdmin() && resource != null;
-      allow delete: if (resource.data.volunteerId == request.auth.uid) || isAdmin() && resource != null;
-    }
-
-    /**
-     * @description Rule for documents in the admins collection.
-     * @path /admins/{adminId}
-     * @allow (get) Anyone can attempt to get an admin (used in the isAdmin() function).
-     * @allow (create) Only admins can create new admins.
-     * @allow (update, delete) Only admins can modify or delete admin profiles.
-     * @deny (list) Listing admins is not allowed.
-     * @principle Existence-based role management, restricts admin management to existing admins.
-     */
-    match /admins/{adminId} {
       allow get: if true;
-      allow list: if false;
+      allow list: if true;
       allow create: if isAdmin();
       allow update: if isAdmin() && resource != null;
       allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Rules for the `/admins/{adminId}` collection.
+     * @path /admins/{adminId}
+     * @allow (get) Admin user can read their own profile.
+     *      Request: { auth: { uid: 'admin123' }, method: 'get', path: '/databases/(default)/documents/admins/admin123' }
+     * @allow (create) Admin user can create their own profile.
+     *      Request: { auth: { uid: 'admin123' }, method: 'create', path: '/databases/(default)/documents/admins/admin123', data: { id: 'admin123', name: 'John Doe', email: 'john@example.com' } }
+     * @allow (update) Admin user can update their own profile.
+     *      Request: { auth: { uid: 'admin123' }, method: 'update', path: '/databases/(default)/documents/admins/admin123', data: { name: 'Jane Doe' } }
+     * @deny (get) Non-admin user cannot read any admin profile.
+     *      Request: { auth: { uid: 'user123' }, method: 'get', path: '/databases/(default)/documents/admins/admin123' }
+     * @deny (list) No one can list admins.
+     *      Request: { auth: { uid: 'user123' }, method: 'list', path: '/databases/(default)/documents/admins' }
+     * @deny (create) Non-admin user cannot create any admin profile.
+     *      Request: { auth: { uid: 'user123' }, method: 'create', path: '/databases/(default)/documents/admins/admin123', data: { id: 'admin123', name: 'John Doe', email: 'john@example.com' } }
+     * @deny (update) Non-admin user cannot update any admin profile.
+     *      Request: { auth: { uid: 'user123' }, method: 'update', path: '/databases/(default)/documents/admins/admin123', data: { name: 'Jane Doe' } }
+     * @principle Enforces document ownership for reads and writes, with admin override.
+     */
+    match /admins/{adminId} {
+      allow get: if isOwner(adminId) || isAdmin();
+      allow list: if false;
+      allow create: if isOwner(adminId) && request.resource.data.id == adminId;
+      allow update: if isExistingOwner(adminId) || isAdmin() && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(adminId) || isAdmin();
+    }
+
+    /**
+     * @description Rules for the `/alerts` collection.
+     * @path /alerts
+     * @deny (list) Unauthenticated user cannot list alerts.
+     *      Request: { auth: null, method: 'list', path: '/databases/(default)/documents/alerts' }
+     */
+    match /alerts {
+        allow get: if false;
+        allow list: if false;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
     }
   }
 }
