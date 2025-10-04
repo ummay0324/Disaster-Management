@@ -28,7 +28,7 @@ type HeaderProps = {
 
 export function Header({ user, children }: HeaderProps) {
   const router = useRouter();
-  const auth = useAuth();
+  const auth = useAuth().auth!;
 
   const handleLogout = () => {
     signOut(auth).then(() => {

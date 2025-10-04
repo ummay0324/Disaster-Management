@@ -1,6 +1,5 @@
 'use client';
-import { useContext } from 'react';
-import { FirebaseContext, FirebaseContextState } from '@/firebase/provider';
+import { useAuth } from '@/firebase/provider';
 import type { User } from 'firebase/auth';
 
 export interface UserHookResult {
@@ -15,13 +14,6 @@ export interface UserHookResult {
  * @returns {UserHookResult} Object with user, isUserLoading, userError.
  */
 export const useUser = (): UserHookResult => {
-  const context = useContext(FirebaseContext);
-
-  if (context === undefined) {
-    throw new Error('useUser must be used within a FirebaseProvider.');
-  }
-
-  const { user, isUserLoading, userError } = context;
-
+  const { user, isUserLoading, userError } = useAuth();
   return { user, isUserLoading, userError };
 };

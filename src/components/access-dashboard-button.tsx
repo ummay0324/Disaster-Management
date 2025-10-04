@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, useUser } from '@/firebase';
+import { useUser, useAuth, useFirebaseApp } from '@/firebase';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
@@ -14,9 +14,9 @@ import type { UserRole } from '@/lib/types';
 export function AccessDashboardButton() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const auth = useAuth();
+  const auth = useAuth().auth!;
   const { user, isUserLoading } = useUser();
-  const firestore = getFirestore(auth.app);
+  const firestore = getFirestore(useFirebaseApp());
 
   const getUserRole = async (uid: string): Promise<UserRole> => {
       const adminDoc = await getDoc(doc(firestore, "admins", uid));

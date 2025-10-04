@@ -1,27 +1,22 @@
 'use client';
 import { Header } from '@/components/header';
 import { useAuth } from '@/firebase';
-import type { User } from '@/lib/types';
 
-
-export default function VictimLayout({
+export default function VolunteerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const { user, isUserLoading } = useAuth();
   
-  // The AlertBanner is now handled in the root AuthLayout
-  // to avoid duplication and simplify logic.
-
   return (
     <div className="flex flex-col min-h-screen">
       {!isUserLoading && user && (
         <Header user={{
           id: user.uid,
-          name: user.displayName || 'Anonymous Victim',
+          name: user.displayName || 'Anonymous Volunteer',
           email: user.email || 'No Email',
-          role: 'victim'
+          role: 'volunteer'
         }} />
       )}
       <main className="flex-1">{children}</main>

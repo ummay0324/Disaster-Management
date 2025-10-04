@@ -74,17 +74,12 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   );
 };
 
-
-/** Hook to access Firebase Auth instance. */
-export const useAuth = (): Auth => {
+export const useAuth = (): FirebaseContextState => {
   const context = useContext(FirebaseContext);
-   if (context === undefined) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within a FirebaseProvider.');
   }
-   if (!context.auth) {
-    throw new Error('Firebase Auth service not available. Check FirebaseProvider props.');
-  }
-  return context.auth;
+  return context;
 };
 
 /** Hook to access Firestore instance. */

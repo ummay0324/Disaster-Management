@@ -29,14 +29,14 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import type { UserRole, User } from '@/lib/types';
-import { useAuth, useUser } from '@/firebase';
+import { useFirebaseApp, useUser } from '@/firebase';
 import { 
   initiateEmailSignIn, 
   initiateEmailSignUp,
 } from '@/firebase/non-blocking-login';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { doc, getFirestore, getDoc } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -62,9 +62,10 @@ export function AuthForm({ isLoginPage = false }: AuthFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const auth = useAuth();
+  const app = useFirebaseApp();
+  const auth = getAuth(app);
   const { user: currentUser, isUserLoading } = useUser();
-  const firestore = getFirestore(auth.app);
+  const firestore = getFirestore(app);
   
   const getUserRole = async (uid: string): Promise<UserRole> => {
       const adminDoc = await getDoc(doc(firestore, "admins", uid));

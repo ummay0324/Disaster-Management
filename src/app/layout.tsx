@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase';
+import { AuthLayout } from '@/components/auth-layout';
 
 export const metadata: Metadata = {
   title: 'DisasterAid',
@@ -22,7 +23,9 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-background text-foreground">
         <FirebaseClientProvider>
-          {children}
+          <AuthLayout>
+            {children}
+          </AuthLayout>
         </FirebaseClientProvider>
         <Toaster />
       </body>
