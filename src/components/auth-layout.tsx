@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -11,7 +12,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
   const firestore = useFirestore();
 
   const alertsQuery = useMemoFirebase(
-    () => query(collection(firestore, 'alerts'), orderBy('createdAt', 'desc'), limit(1)),
+    () => firestore ? query(collection(firestore, 'alerts'), orderBy('createdAt', 'desc'), limit(1)) : null,
     [firestore]
   );
   const { data: alerts, isLoading: isLoadingAlerts } = useCollection<DisasterAlert>(alertsQuery);
