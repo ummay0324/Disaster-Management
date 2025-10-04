@@ -1,10 +1,10 @@
 'use client';
 import { AidRequest, AidRequestItem, InventoryItem } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { BarChart, BedDouble, Box, GlassWater, Package, Pill, Tent, UtensilsCrossed, FileText, AlertTriangle, CheckCircle, PieChart, Loader2 } from "lucide-react";
+import { BarChart as BarChartIcon, BedDouble, Box, GlassWater, Package, Pill, Tent, UtensilsCrossed, FileText, AlertTriangle, CheckCircle, PieChart as PieChartIcon, Loader2 } from "lucide-react";
 import { Progress } from "../ui/progress";
 import { useMemo } from "react";
-import { ResponsiveContainer, Pie, Cell, Tooltip, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+import { ResponsiveContainer, Pie, Cell, Tooltip, Bar, XAxis, YAxis, CartesianGrid, Legend, BarChart, PieChart } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "../ui/chart";
 
 interface InventoryDashboardProps {
@@ -102,7 +102,7 @@ export function InventoryDashboard({ initialInventory, requests, isLoading }: In
             <div className="grid gap-8 lg:grid-cols-5">
                  <Card className="lg:col-span-3">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><BarChart /> Stock vs. Demand</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><BarChartIcon /> Stock vs. Demand</CardTitle>
                         <CardDescription>Comparing available inventory with outstanding victim requests.</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -123,7 +123,7 @@ export function InventoryDashboard({ initialInventory, requests, isLoading }: In
                 </Card>
                 <Card className="lg:col-span-2">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><PieChart /> Demand Distribution</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><PieChartIcon /> Demand Distribution</CardTitle>
                         <CardDescription>Breakdown of all items currently requested by victims.</CardDescription>
                     </CardHeader>
                     <CardContent className="flex justify-center">
