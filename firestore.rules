@@ -1,128 +1,146 @@
 /**
- * @file Firebase Security Rules for ReliefLink Firestore database.
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a role-based access control system for the ReliefLink application.
  *
- * @corePhilosophy This ruleset enforces a role-based access control model, where admins have broad access and authenticated users (volunteers, victims) have read access to alerts.
- * @dataStructure Data is organized into top-level collections for 'alerts', 'victims', 'volunteers', 'requests', and 'admins'.
- * @keySecurityDecisions Access to create/modify/delete alerts is restricted to admins only. Read access to alerts is granted to any authenticated user. Admin status is determined by the existence of a document in the `/admins/{adminId}` collection.
+ * Data Structure:
+ * - /victims/{victimId}: Stores victim profiles, accessible only to the victim or an admin.
+ * - /volunteers/{volunteerId}: Stores volunteer profiles, accessible only to the volunteer or an admin.
+ * - /requests/{requestId}: Stores requests for aid, accessible based on the request status and user roles.
+ * - /tasks/{taskId}: Stores tasks assigned to volunteers.
+ * - /admins/{adminId}: Stores admin UIDs. Existence in this collection grants admin privileges.
+ *
+ * Key Security Decisions:
+ * - User data (victims, volunteers) is strictly controlled by path-based ownership.
+ * - Admin privileges are granted based on existence in the /admins collection.
+ * - The rules are designed to prevent unauthorized data access and modification.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Grants read access to all authenticated users and restricts write access to admins.
-     * @path /alerts/{alertId}
-     * @allow (get, list) - Any signed-in user can read alerts.
-     * @allow (create) - An admin can create new alerts.
-     * @allow (update, delete) - An admin can modify or delete existing alerts.
-     * @deny (create) - A non-admin user cannot create alerts.
-     * @deny (update, delete) - A non-admin user cannot modify or delete alerts.
-     * @principle Enforces role-based access control (admin vs. authenticated user) for alerts.
-     */
-    match /alerts/{alertId} {
-      allow get, list: if isSignedIn();
-      allow create: if isAdmin();
-      allow update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Allows the owner to read, create, update, and delete their own victim profile.
+     * @description Allows access to victim profiles only to the victim or an admin.
      * @path /victims/{victimId}
-     * @allow (create) - A user can create their own victim profile if the ID matches their auth UID.
-     * @allow (get, list) - A user can read their own victim profile if the ID matches their auth UID.
-     * @allow (update, delete) - A user can update or delete their own victim profile if the ID matches their auth UID and the document exists.
-     * @deny (create) - A user cannot create a victim profile with an ID that doesn't match their auth UID.
-     * @deny (update, delete) - A user cannot update or delete a victim profile with an ID that doesn't match their auth UID.
-     * @principle Enforces document ownership for victim profiles.
+     * @allow (get, update, delete) if the user is the victim (victimId matches auth.uid) or an admin.
+     * @allow (create) if the user's auth.uid matches the victimId.
+     * @deny (create, update, delete) if the user is not the victim or an admin.
+     * @principle Enforces document ownership for writes.
      */
     match /victims/{victimId} {
-      allow get, list: if isOwner(victimId);
-      allow create: if isOwner(victimId);
-      allow update, delete: if isOwner(victimId);
+      function isOwner(victimId) {
+        return request.auth.uid == victimId;
+      }
+      function isAdmin() {
+        return exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      }
+      function isExistingOwner(victimId) {
+        return isOwner(victimId) && resource != null;
+      }
+
+      allow get: if isOwner(victimId) || isAdmin();
+      allow list: if false;
+
+      allow create: if isOwner(victimId) && request.resource.data.id == victimId;
+      allow update: if isExistingOwner(victimId) || isAdmin();
+      allow delete: if isExistingOwner(victimId) || isAdmin();
     }
 
     /**
-     * @description Allows the owner to read, create, update, and delete their own volunteer profile.
+     * @description Allows access to volunteer profiles only to the volunteer or an admin.
      * @path /volunteers/{volunteerId}
-     * @allow (create) - A user can create their own volunteer profile if the ID matches their auth UID.
-     * @allow (get, list) - A user can read their own volunteer profile if the ID matches their auth UID.
-     * @allow (update, delete) - A user can update or delete their own volunteer profile if the ID matches their auth UID and the document exists.
-     * @deny (create) - A user cannot create a volunteer profile with an ID that doesn't match their auth UID.
-     * @deny (update, delete) - A user cannot update or delete a volunteer profile with an ID that doesn't match their auth UID.
-     * @principle Enforces document ownership for volunteer profiles.
+     * @allow (get, update, delete) if the user is the volunteer (volunteerId matches auth.uid) or an admin.
+     * @allow (create) if the user's auth.uid matches the volunteerId.
+     * @deny (create, update, delete) if the user is not the volunteer or an admin.
+     * @principle Enforces document ownership for writes.
      */
     match /volunteers/{volunteerId} {
-      allow get, list: if isOwner(volunteerId);
-      allow create: if isOwner(volunteerId);
-      allow update, delete: if isOwner(volunteerId);
+      function isOwner(volunteerId) {
+        return request.auth.uid == volunteerId;
+      }
+      function isAdmin() {
+        return exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      }
+      function isExistingOwner(volunteerId) {
+        return isOwner(volunteerId) && resource != null;
+      }
+
+      allow get: if isOwner(volunteerId) || isAdmin();
+      allow list: if false;
+
+      allow create: if isOwner(volunteerId) && request.resource.data.id == volunteerId;
+      allow update: if isExistingOwner(volunteerId) || isAdmin();
+      allow delete: if isExistingOwner(volunteerId) || isAdmin();
     }
 
     /**
-     * @description Allows read and write access to requests, but only if the user is authenticated.
+     * @description Allows read access to requests for anyone and write access only to admins.
      * @path /requests/{requestId}
-     * @allow (get, list) - Any authenticated user can read requests.
-     * @allow (create) - Any authenticated user can create requests.
-     * @allow (update, delete) - Any authenticated user can update or delete requests if the document exists.
-     * @principle Allows authenticated users to manage requests.
+     * @allow (get, list) to anyone.
+     * @allow (create, update, delete) only to admins.
+     * @deny (create, update, delete) if the user is not an admin.
+     * @principle Allows public read access with admin-controlled writes.
      */
     match /requests/{requestId} {
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      function isAdmin() {
+        return exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      }
+
+      allow get: if true;
+      allow list: if true;
+
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
     }
 
     /**
-     * @description Allows read and write access to tasks for authenticated users.
+     * @description Allows read and write access to tasks only to admins.
      * @path /tasks/{taskId}
-     * @allow (get, list) - Any authenticated user can read tasks.
-     * @allow (create) - Any authenticated user can create tasks.
-     * @allow (update, delete) - Any authenticated user can update or delete tasks if the document exists.
-     * @principle Allows authenticated users to manage tasks.
+     * @allow (get, list, create, update, delete) only to admins.
+     * @deny (get, list, create, update, delete) if the user is not an admin.
      */
     match /tasks/{taskId} {
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      function isAdmin() {
+        return exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      }
+
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
     }
 
     /**
-     * @description Allows admins to read, create, update, and delete their own admin profile.  Other users cannot access the admin collection.
+     * @description Allows create access to admin documents only if the document ID matches the authenticated user's UID. get and list is not allowed, only existence check.
      * @path /admins/{adminId}
-     * @allow (get, list) - Only an admin can read their own admin profile.
-     * @allow (create) - Only an admin can create their own admin profile if the ID matches their auth UID.
-     * @allow (update, delete) - Only an admin can update or delete their own admin profile if the ID matches their auth UID and the document exists.
-     * @deny (create, update, delete) - Non-admin users cannot create, update or delete admin profiles.
-     * @principle Enforces strict access control for admin profiles.  Existence confers admin priviledges.
+     * @allow create if the document ID matches the authenticated user's UID.
+     * @deny get, update, delete.
+     * @principle Enforces that only the user can create their own admin profile (if allowed).
      */
     match /admins/{adminId} {
-      allow get, list: if isAdmin() ;
-      allow create: if request.auth.uid == adminId;
-      allow update, delete: if request.auth.uid == adminId && isAdmin();
+      function isSelf(adminId) {
+        return request.auth.uid == adminId;
+      }
+
+      allow get: if false;
+      allow list: if false;
+      allow create: if isSelf(adminId);
+      allow update: if false;
+      allow delete: if false;
     }
-  }
 
-  // Helper function to determine if the user is signed in.
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
-  // Helper function to determine if the user is the owner of the document based on the provided userId.
-  function isOwner(userId) {
-    return request.auth.uid == userId;
-  }
-
-    // Helper function to determine if the user is the owner of the document based on the provided userId and confirms the document exists.
-  function isExistingOwner(userId) {
-    return isOwner(userId) && resource != null;
-  }
-
-  // Helper function to determine if the user is an admin by checking if their UID exists as a document ID in the /admins collection.
-  function isAdmin() {
-    return exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-  }
-
-   // Helper function to determine if the user is an admin by checking if their UID exists as a document ID in the /admins collection and confirms the document exists.
-   function isExistingAdmin(adminId) {
-    return isAdmin() && resource != null;
+     /**
+      * @description Publicly readable collection.
+      * @path /shelters
+      * @allow anyone to read the shelters collection
+      */
+     match /shelters/{shelterId} {
+        allow get: if true;
+        allow list: if true;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+     }
   }
 }
